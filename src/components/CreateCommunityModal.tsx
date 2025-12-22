@@ -23,10 +23,6 @@ interface OpenChangeDetails {
   open: boolean;
 }
 
-interface ValueChangeDetails {
-  value: string | null;
-}
-
 interface CreateCommunityModalProps {
   onSuccess: () => void;
 }

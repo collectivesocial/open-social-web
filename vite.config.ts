@@ -14,6 +14,7 @@ export default defineConfig({
       '/logout': 'http://127.0.0.1:3001',
       '/users': 'http://127.0.0.1:3001',
       '/oauth': 'http://127.0.0.1:3001',
+      '/communities': 'http://127.0.0.1:3001',
       '/api': 'http://127.0.0.1:3001',
     },
   },

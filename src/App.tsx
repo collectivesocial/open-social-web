@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center, Grid, Flex } from '@chakra-ui/react';
 import { Navbar } from './components/Navbar';
 import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard';
 import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
+import { CommunityPage } from './pages/CommunityPage';
 import './App.css';
 
 // Use relative paths - Vite proxy will forward to backend
@@ -35,8 +37,6 @@ interface Membership {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [membershipsLoading, setMembershipsLoading] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -51,31 +51,11 @@ function App() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-        // Fetch memberships after user is loaded
-        fetchMemberships();
       }
     } catch (error) {
       console.error('Auth check failed:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchMemberships = async () => {
-    setMembershipsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/users/me/memberships`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setMemberships(data.memberships);
-      }
-    } catch (error) {
-      console.error('Failed to fetch memberships:', error);
-    } finally {
-      setMembershipsLoading(false);
     }
   };
 
@@ -114,7 +94,42 @@ function App() {
   return (
     <Box minH="100vh" bg="gray.50">
       <Navbar user={user} onLogout={handleLogout} />
-      <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/communities/:did" element={<CommunityPage />} />
+      </Routes>
+    </Box>
+  );
+}
+
+function HomePage() {
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [membershipsLoading, setMembershipsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchMemberships();
+  }, []);
+
+  const fetchMemberships = async () => {
+    setMembershipsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/users/me/memberships`, {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMemberships(data.memberships);
+      }
+    } catch (error) {
+      console.error('Failed to fetch memberships:', error);
+    } finally {
+      setMembershipsLoading(false);
+    }
+  };
+
+  return (
+    <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <VStack gap={6} align="stretch">
           <Flex 
             direction={{ base: 'column', md: 'row' }} 
@@ -152,7 +167,6 @@ function App() {
           )}
         </VStack>
       </Container>
-    </Box>
   );
 }
 

@@ -1,4 +1,5 @@
 import { Box, Flex, Heading, Text, Badge, Image, Skeleton } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 
 interface Community {
   did: string;
@@ -21,6 +22,11 @@ interface CommunityCardProps {
 
 export function CommunityCard({ membership }: CommunityCardProps) {
   const { community, status } = membership;
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/communities/${encodeURIComponent(community.did)}`);
+  };
 
   return (
     <Box
@@ -28,9 +34,19 @@ export function CommunityCard({ membership }: CommunityCardProps) {
       borderRadius="lg"
       shadow="sm"
       p={5}
-      _hover={{ shadow: 'md' }}
-      transition="all 0.2s"
       cursor="pointer"
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      _hover={{ shadow: 'md', transform: 'translateY(-2px)' }}
+      _focusVisible={{ outline: '2px solid', outlineColor: 'teal.500', outlineOffset: '2px' }}
+      transition="all 0.2s"
       borderWidth="1px"
       borderColor={status === 'pending' ? 'orange.200' : 'gray.200'}
     >

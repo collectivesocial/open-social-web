@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center, Grid } from '@chakra-ui/react';
+import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center, Grid, Flex } from '@chakra-ui/react';
 import { Navbar } from './components/Navbar';
 import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard';
 import { EmptyState } from './components/EmptyState';
+import { CreateCommunityModal } from './components/CreateCommunityModal';
 import './App.css';
 
 // Use relative paths - Vite proxy will forward to backend
@@ -115,12 +116,15 @@ function App() {
       <Navbar user={user} onLogout={handleLogout} />
       <Container maxW="1920px" py={8} px={6}>
         <VStack gap={6} align="stretch">
-          <Box>
-            <Heading size="lg" mb={2}>My Communities</Heading>
-            <Text color="gray.600">
-              Communities you've joined on OpenSocial
-            </Text>
-          </Box>
+          <Flex justify="space-between" align="center">
+            <Box>
+              <Heading size="lg" mb={2}>My Communities</Heading>
+              <Text color="gray.600">
+                Communities you've joined on OpenSocial
+              </Text>
+            </Box>
+            <CreateCommunityModal onSuccess={fetchMemberships} />
+          </Flex>
 
           {membershipsLoading ? (
             <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
@@ -181,7 +185,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
     <Container maxW="container.sm" py={20}>
       <VStack gap={8} align="stretch">
         <Box textAlign="center">
-          <Heading size="2xl" mb={2}>OpenSocial</Heading>
+          <Heading size="2xl" mb={2} color="gray.900">OpenSocial</Heading>
           <Text fontSize="lg" color="gray.600">
             Community management for ATProto apps
           </Text>
@@ -190,7 +194,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
         <Box bg="white" p={8} borderRadius="lg" shadow="md">
           <form onSubmit={handleLogin}>
             <VStack gap={4} align="stretch">
-              <Heading size="lg">Login with ATProtocol</Heading>
+              <Heading size="lg" color="gray.900">Login with ATProtocol</Heading>
               <Input
                 type="text"
                 value={handle}
@@ -204,6 +208,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
                 type="submit"
                 disabled={isLoading || !handle}
                 colorPalette="teal"
+                variant="solid"
                 size="lg"
                 width="full"
               >

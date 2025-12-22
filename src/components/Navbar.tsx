@@ -65,6 +65,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
         ) : (
           <Button
             colorPalette="teal"
+            variant="solid"
             size="sm"
             onClick={(e) => {
               e.preventDefault();

@@ -11,6 +11,7 @@ import {
   Center,
   Flex,
   Input,
+  Textarea,
   HStack,
 } from '@chakra-ui/react';
 import { Avatar } from '../components/ui/avatar';
@@ -37,6 +38,10 @@ export function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (did) {
@@ -103,6 +108,57 @@ export function CommunityPage() {
       setError(err instanceof Error ? err.message : 'Failed to upload avatar');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditDisplayName(details?.community.displayName || '');
+    setEditDescription(details?.community.description || '');
+    setIsEditing(true);
+    setError('');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditDisplayName('');
+    setEditDescription('');
+    setError('');
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editDisplayName.trim()) {
+      setError('Display name is required');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/communities/${encodeURIComponent(did!)}/profile`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          displayName: editDisplayName.trim(),
+          description: editDescription.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update community');
+      }
+
+      // Refresh community details
+      await fetchCommunityDetails();
+      setIsEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update community');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -195,35 +251,97 @@ export function CommunityPage() {
 
             {/* Community Info */}
             <VStack align={{ base: 'center', md: 'flex-start' }} flex={1} gap={2}>
-              <Heading size={{ base: 'lg', md: 'xl' }}>{community.displayName}</Heading>
-              
-              <HStack gap={2}>
-                <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
-                  {memberCount} {memberCount === 1 ? 'member' : 'members'}
-                </Text>
-                {userRole && (
-                  <>
-                    <Text color="gray.400">•</Text>
-                    <Text
-                      color="teal.600"
-                      fontSize={{ base: 'sm', md: 'md' }}
-                      fontWeight="medium"
-                    >
-                      {userRole}
+              {isEditing ? (
+                <VStack align="stretch" gap={3} width="full">
+                  <Box>
+                    <Text fontSize="sm" fontWeight="medium" mb={1}>
+                      Display Name
                     </Text>
-                  </>
-                )}
-              </HStack>
+                    <Input
+                      value={editDisplayName}
+                      onChange={(e) => setEditDisplayName(e.target.value)}
+                      placeholder="Community name"
+                      size="lg"
+                    />
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="medium" mb={1}>
+                      Description
+                    </Text>
+                    <Textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="Community description"
+                      rows={3}
+                    />
+                  </Box>
+                  <HStack gap={2}>
+                    <Button
+                      onClick={handleSaveProfile}
+                      colorPalette="teal"
+                      bg="teal"
+                      disabled={saving}
+                      size="sm"
+                    >
+                      {saving ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button
+                      onClick={handleCancelEdit}
+                      variant="outline"
+                      disabled={saving}
+                      size="sm"
+                      bg="transparent"
+                    >
+                      Cancel
+                    </Button>
+                  </HStack>
+                </VStack>
+              ) : (
+                <>
+                  <HStack gap={3} align="center">
+                    <Heading size={{ base: 'lg', md: 'xl' }}>{community.displayName}</Heading>
+                    {isAdmin && (
+                      <Button
+                        onClick={handleEditClick}
+                        size="sm"
+                        variant="ghost"
+                        bg="transparent"
+                        colorPalette="teal"
+                      >
+                        Edit
+                      </Button>
+                    )}
+                  </HStack>
+                  
+                  <HStack gap={2}>
+                    <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
+                      {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                    </Text>
+                    {userRole && (
+                      <>
+                        <Text color="gray.400">•</Text>
+                        <Text
+                          color="teal.600"
+                          fontSize={{ base: 'sm', md: 'md' }}
+                          fontWeight="medium"
+                        >
+                          {userRole}
+                        </Text>
+                      </>
+                    )}
+                  </HStack>
 
-              {community.description && (
-                <Text color="gray.700" fontSize={{ base: 'sm', md: 'md' }}>
-                  {community.description}
-                </Text>
+                  {community.description && (
+                    <Text color="gray.700" fontSize={{ base: 'sm', md: 'md' }}>
+                      {community.description}
+                    </Text>
+                  )}
+
+                  <Text color="gray.500" fontSize="xs" fontFamily="mono">
+                    {community.did}
+                  </Text>
+                </>
               )}
-
-              <Text color="gray.500" fontSize="xs" fontFamily="mono">
-                {community.did}
-              </Text>
             </VStack>
           </Flex>
 

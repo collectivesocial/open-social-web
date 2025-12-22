@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center } from '@chakra-ui/react';
+import { Navbar } from './components/Navbar';
 import './App.css';
 
 // Use relative paths - Vite proxy will forward to backend
@@ -51,36 +53,46 @@ function App() {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="card">
-          <h2>Loading...</h2>
-        </div>
-      </div>
+      <Box minH="100vh" bg="gray.50">
+        <Navbar user={null} onLogout={() => {}} />
+        <Center h="calc(100vh - 60px)">
+          <Spinner size="xl" color="teal.500" />
+        </Center>
+      </Box>
     );
   }
 
   if (!user) {
-    return <LoginPage apiUrl={API_URL} />;
+    return (
+      <Box minH="100vh" bg="gray.50">
+        <Navbar user={null} onLogout={() => {}} />
+        <LoginPage apiUrl={API_URL} />
+      </Box>
+    );
   }
 
   return (
-    <div className="container">
-      <div className="card">
-        <h1>Welcome to OpenSocial</h1>
-        <div className="user-info">
-          {user.avatar && <img src={user.avatar} alt="Avatar" className="avatar" />}
-          <div>
-            <h2>{user.displayName || user.handle}</h2>
-            <p className="handle">@{user.handle}</p>
-            {user.description && <p className="description">{user.description}</p>}
-            <p className="did">DID: {user.did}</p>
-          </div>
-        </div>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
-      </div>
-    </div>
+    <Box minH="100vh" bg="gray.50">
+      <Navbar user={user} onLogout={handleLogout} />
+      <Container maxW="container.lg" py={8}>
+        <VStack gap={6} align="stretch">
+          <Box bg="white" p={6} borderRadius="lg" shadow="sm">
+            <Heading size="lg" mb={4}>Welcome to OpenSocial</Heading>
+            <Text fontSize="lg" color="gray.600" mb={2}>
+              Community management for ATProto apps
+            </Text>
+            {user.description && (
+              <Text color="gray.600" mt={4}>
+                {user.description}
+              </Text>
+            )}
+            <Text fontSize="sm" color="gray.500" mt={4}>
+              DID: {user.did}
+            </Text>
+          </Box>
+        </VStack>
+      </Container>
+    </Box>
   );
 }
 
@@ -115,32 +127,47 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <h1>OpenSocial</h1>
-        <p className="subtitle">Community management for ATProto apps</p>
+    <Container maxW="container.sm" py={20}>
+      <VStack gap={8} align="stretch">
+        <Box textAlign="center">
+          <Heading size="2xl" mb={2}>OpenSocial</Heading>
+          <Text fontSize="lg" color="gray.600">
+            Community management for ATProto apps
+          </Text>
+        </Box>
         
-        <form onSubmit={handleLogin} className="login-form">
-          <h2>Login with ATProtocol</h2>
-          <input
-            type="text"
-            value={handle}
-            onChange={(e) => setHandle(e.target.value)}
-            placeholder="your-handle.bsky.social"
-            disabled={isLoading}
-            required
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !handle}
-            className="login-button"
-          >
-            {isLoading ? 'Redirecting...' : 'Login'}
-          </button>
-          {error && <p className="error">{error}</p>}
-        </form>
-      </div>
-    </div>
+        <Box bg="white" p={8} borderRadius="lg" shadow="md">
+          <form onSubmit={handleLogin}>
+            <VStack gap={4} align="stretch">
+              <Heading size="lg">Login with ATProtocol</Heading>
+              <Input
+                type="text"
+                value={handle}
+                onChange={(e) => setHandle(e.target.value)}
+                placeholder="your-handle.bsky.social"
+                disabled={isLoading}
+                required
+                size="lg"
+              />
+              <Button
+                type="submit"
+                disabled={isLoading || !handle}
+                colorPalette="teal"
+                size="lg"
+                width="full"
+              >
+                {isLoading ? 'Redirecting...' : 'Login'}
+              </Button>
+              {error && (
+                <Text color="red.600" fontSize="sm">
+                  {error}
+                </Text>
+              )}
+            </VStack>
+          </form>
+        </Box>
+      </VStack>
+    </Container>
   );
 }
 

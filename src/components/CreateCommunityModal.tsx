@@ -9,12 +9,6 @@ import {
   DialogCloseTrigger,
 } from './ui/dialog.tsx';
 import {
-  RadioGroupRoot,
-  RadioGroupItem,
-  RadioGroupItemControl,
-  RadioGroupItemText,
-} from './ui/radio-group.tsx';
-import {
   Box,
   Button,
   Input,
@@ -125,37 +119,99 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
               <Text fontWeight="medium" mb={2}>
                 Community Type
               </Text>
-              <RadioGroupRoot
-                value={creationType}
-                onValueChange={(e: ValueChangeDetails) => {
-                  if (e.value) setCreationType(e.value as 'new' | 'existing');
-                }}
-              >
-                <VStack align="stretch" gap={2}>
-                  <RadioGroupItem value="new">
-                    <RadioGroupItemControl />
-                    <RadioGroupItemText>
-                      <Box>
-                        <Text fontWeight="medium">Create on OpenSocial</Text>
-                        <Text fontSize="sm" color="gray.600">
-                          Get a new @name.opensocial.community handle
-                        </Text>
-                      </Box>
-                    </RadioGroupItemText>
-                  </RadioGroupItem>
-                  <RadioGroupItem value="existing">
-                    <RadioGroupItemControl />
-                    <RadioGroupItemText>
-                      <Box>
-                        <Text fontWeight="medium">Use Existing Account</Text>
-                        <Text fontSize="sm" color="gray.600">
-                          Connect an existing ATProto account with app password
-                        </Text>
-                      </Box>
-                    </RadioGroupItemText>
-                  </RadioGroupItem>
-                </VStack>
-              </RadioGroupRoot>
+              <VStack align="stretch" gap={3} role="radiogroup" aria-label="Community Type">
+                <Box
+                  as="button"
+                  role="radio"
+                  aria-checked={creationType === 'new'}
+                  tabIndex={0}
+                  p={3}
+                  borderWidth="2px"
+                  borderColor={creationType === 'new' ? 'teal.500' : 'gray.200'}
+                  borderRadius="md"
+                  cursor="pointer"
+                  onClick={() => setCreationType('new')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setCreationType('new');
+                    }
+                  }}
+                  bg={creationType === 'new' ? 'teal.50' : 'transparent'}
+                  _focusVisible={{ outline: '2px solid', outlineColor: 'teal.500', outlineOffset: '2px' }}
+                  textAlign="left"
+                  w="full"
+                >
+                  <HStack gap={3}>
+                    <Box
+                      w="20px"
+                      h="20px"
+                      borderRadius="full"
+                      borderWidth="2px"
+                      borderColor={creationType === 'new' ? 'teal.500' : 'gray.300'}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      {creationType === 'new' && (
+                        <Box w="10px" h="10px" borderRadius="full" bg="teal.500" />
+                      )}
+                    </Box>
+                    <VStack align="start" gap={0} flex={1}>
+                      <Text fontWeight="medium">Create on OpenSocial</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        Get a new @name.opensocial.community handle
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </Box>
+
+                <Box
+                  as="button"
+                  role="radio"
+                  aria-checked={creationType === 'existing'}
+                  tabIndex={0}
+                  p={3}
+                  borderWidth="2px"
+                  borderColor={creationType === 'existing' ? 'teal.500' : 'gray.200'}
+                  borderRadius="md"
+                  cursor="pointer"
+                  onClick={() => setCreationType('existing')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setCreationType('existing');
+                    }
+                  }}
+                  bg={creationType === 'existing' ? 'teal.50' : 'transparent'}
+                  _focusVisible={{ outline: '2px solid', outlineColor: 'teal.500', outlineOffset: '2px' }}
+                  textAlign="left"
+                  w="full"
+                >
+                  <HStack gap={3}>
+                    <Box
+                      w="20px"
+                      h="20px"
+                      borderRadius="full"
+                      borderWidth="2px"
+                      borderColor={creationType === 'existing' ? 'teal.500' : 'gray.300'}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      {creationType === 'existing' && (
+                        <Box w="10px" h="10px" borderRadius="full" bg="teal.500" />
+                      )}
+                    </Box>
+                    <VStack align="start" gap={0} flex={1}>
+                      <Text fontWeight="medium">Use Existing Account</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        Connect an existing ATProto account with app password
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </Box>
+              </VStack>
             </Box>
 
             {creationType === 'new' ? (

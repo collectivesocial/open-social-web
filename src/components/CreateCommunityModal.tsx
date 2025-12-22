@@ -102,12 +102,18 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
   return (
     <DialogRoot open={open} onOpenChange={(e: OpenChangeDetails) => setOpen(e.open)}>
       <DialogTrigger asChild>
-        <Button colorPalette="teal" variant="solid" bg="teal" size="lg">
+        <Button 
+          colorPalette="teal" 
+          variant="solid" 
+          bg="teal" 
+          size={{ base: 'md', md: 'lg' }}
+          width={{ base: 'full', md: 'auto' }}
+        >
           Create Community
         </Button>
       </DialogTrigger>
 
-      <DialogContent maxW="600px">
+      <DialogContent maxW={{ base: '95vw', sm: '500px', md: '600px' }} mx={{ base: 2, sm: 4 }}>
         <DialogHeader>
           <DialogTitle>Create a Community</DialogTitle>
           <DialogCloseTrigger />

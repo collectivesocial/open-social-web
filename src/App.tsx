@@ -114,12 +114,17 @@ function App() {
   return (
     <Box minH="100vh" bg="gray.50">
       <Navbar user={user} onLogout={handleLogout} />
-      <Container maxW="1920px" py={8} px={6}>
+      <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <VStack gap={6} align="stretch">
-          <Flex justify="space-between" align="center">
+          <Flex 
+            direction={{ base: 'column', md: 'row' }} 
+            justify="space-between" 
+            align={{ base: 'stretch', md: 'center' }}
+            gap={{ base: 4, md: 0 }}
+          >
             <Box>
-              <Heading size="lg" mb={2}>My Communities</Heading>
-              <Text color="gray.600">
+              <Heading size={{ base: 'md', md: 'lg' }} mb={2}>My Communities</Heading>
+              <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
                 Communities you've joined on OpenSocial
               </Text>
             </Box>

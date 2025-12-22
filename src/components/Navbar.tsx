@@ -22,7 +22,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
       bg="white"
       borderBottom="1px solid"
       borderColor="gray.200"
-      px={6}
+      px={{ base: 4, md: 6 }}
       py={3}
       position="sticky"
       top={0}
@@ -30,7 +30,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
     >
       <Flex justify="space-between" align="center" maxW="1920px" mx="auto">
         {/* Logo/Brand */}
-        <Text fontSize="xl" fontWeight="bold" color="teal.600">
+        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="teal.600">
           Open Social
         </Text>
 

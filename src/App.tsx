@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center } from '@chakra-ui/react';
+import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center, Grid } from '@chakra-ui/react';
 import { Navbar } from './components/Navbar';
+import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard';
+import { EmptyState } from './components/EmptyState';
 import './App.css';
 
 // Use relative paths - Vite proxy will forward to backend
@@ -14,9 +16,26 @@ interface User {
   description?: string;
 }
 
+interface Community {
+  did: string;
+  displayName: string;
+  description?: string;
+  avatar?: string;
+}
+
+interface Membership {
+  uri: string;
+  communityDid: string;
+  joinedAt: string;
+  status: 'active' | 'pending';
+  community: Community;
+}
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [membershipsLoading, setMembershipsLoading] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -31,11 +50,31 @@ function App() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        // Fetch memberships after user is loaded
+        fetchMemberships();
       }
     } catch (error) {
       console.error('Auth check failed:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMemberships = async () => {
+    setMembershipsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/users/me/memberships`, {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMemberships(data.memberships);
+      }
+    } catch (error) {
+      console.error('Failed to fetch memberships:', error);
+    } finally {
+      setMembershipsLoading(false);
     }
   };
 
@@ -74,22 +113,34 @@ function App() {
   return (
     <Box minH="100vh" bg="gray.50">
       <Navbar user={user} onLogout={handleLogout} />
-      <Container maxW="container.lg" py={8}>
+      <Container maxW="1920px" py={8} px={6}>
         <VStack gap={6} align="stretch">
-          <Box bg="white" p={6} borderRadius="lg" shadow="sm">
-            <Heading size="lg" mb={4}>Welcome to OpenSocial</Heading>
-            <Text fontSize="lg" color="gray.600" mb={2}>
-              Community management for ATProto apps
-            </Text>
-            {user.description && (
-              <Text color="gray.600" mt={4}>
-                {user.description}
-              </Text>
-            )}
-            <Text fontSize="sm" color="gray.500" mt={4}>
-              DID: {user.did}
+          <Box>
+            <Heading size="lg" mb={2}>My Communities</Heading>
+            <Text color="gray.600">
+              Communities you've joined on OpenSocial
             </Text>
           </Box>
+
+          {membershipsLoading ? (
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
+              <CommunityCardSkeleton />
+              <CommunityCardSkeleton />
+              <CommunityCardSkeleton />
+              <CommunityCardSkeleton />
+            </Grid>
+          ) : memberships.length === 0 ? (
+            <EmptyState
+              title="No communities yet"
+              description="You haven't joined any communities yet. Join a community to get started and connect with others who share your interests."
+            />
+          ) : (
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
+              {memberships.map((membership) => (
+                <CommunityCard key={membership.uri} membership={membership} />
+              ))}
+            </Grid>
+          )}
         </VStack>
       </Container>
     </Box>

@@ -28,7 +28,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
       top={0}
       zIndex={10}
     >
-      <Flex justify="space-between" align="center" maxW="1200px" mx="auto">
+      <Flex justify="space-between" align="center" maxW="1920px" mx="auto">
         {/* Logo/Brand */}
         <Text fontSize="xl" fontWeight="bold" color="teal.600">
           Open Social

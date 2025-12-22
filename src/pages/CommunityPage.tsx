@@ -13,6 +13,7 @@ import {
   Input,
   Textarea,
   HStack,
+  Badge,
 } from '@chakra-ui/react';
 import { Avatar } from '../components/ui/avatar';
 
@@ -20,6 +21,7 @@ interface Community {
   did: string;
   displayName: string;
   description?: string;
+  type?: 'open' | 'admin-approved' | 'private';
   avatar?: string;
   banner?: string;
 }
@@ -41,6 +43,7 @@ export function CommunityPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editType, setEditType] = useState<'open' | 'admin-approved' | 'private'>('open');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -114,6 +117,7 @@ export function CommunityPage() {
   const handleEditClick = () => {
     setEditDisplayName(details?.community.displayName || '');
     setEditDescription(details?.community.description || '');
+    setEditType(details?.community.type || 'open');
     setIsEditing(true);
     setError('');
   };
@@ -122,6 +126,7 @@ export function CommunityPage() {
     setIsEditing(false);
     setEditDisplayName('');
     setEditDescription('');
+    setEditType('open');
     setError('');
   };
 
@@ -144,6 +149,7 @@ export function CommunityPage() {
         body: JSON.stringify({
           displayName: editDisplayName.trim(),
           description: editDescription.trim(),
+          type: editType,
         }),
       });
 
@@ -275,6 +281,28 @@ export function CommunityPage() {
                       rows={3}
                     />
                   </Box>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="medium" mb={1}>
+                      Community Type
+                    </Text>
+                    <select
+                      value={editType}
+                      onChange={(e) => setEditType(e.target.value as 'open' | 'admin-approved' | 'private')}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'white',
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="open">Open - Anyone can join</option>
+                      <option value="admin-approved">Admin Approved - Requires approval</option>
+                      <option value="private">Private - Invite only</option>
+                    </select>
+                  </Box>
                   <HStack gap={2}>
                     <Button
                       onClick={handleSaveProfile}
@@ -317,6 +345,23 @@ export function CommunityPage() {
                     <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
                       {memberCount} {memberCount === 1 ? 'member' : 'members'}
                     </Text>
+                    <Text color="gray.400">•</Text>
+                    <Badge
+                      colorPalette={
+                        community.type === 'open'
+                          ? 'green'
+                          : community.type === 'admin-approved'
+                          ? 'orange'
+                          : 'purple'
+                      }
+                      variant="subtle"
+                    >
+                      {community.type === 'open'
+                        ? 'Open'
+                        : community.type === 'admin-approved'
+                        ? 'Admin Approved'
+                        : 'Private'}
+                    </Badge>
                     {userRole && (
                       <>
                         <Text color="gray.400">•</Text>

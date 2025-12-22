@@ -1,4 +1,5 @@
 import { Box, Flex, Button, Text } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import { Avatar } from './ui/avatar';
 import { MenuRoot, MenuTrigger, MenuContent, MenuItem } from './ui/menu';
 
@@ -16,6 +17,8 @@ interface NavbarProps {
 }
 
 export function Navbar({ user, onLogout }: NavbarProps) {
+  const navigate = useNavigate();
+
   return (
     <Box
       as="nav"
@@ -30,7 +33,15 @@ export function Navbar({ user, onLogout }: NavbarProps) {
     >
       <Flex justify="space-between" align="center" maxW="1920px" mx="auto">
         {/* Logo/Brand */}
-        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="teal.600">
+        <Text
+          fontSize={{ base: 'lg', md: 'xl' }}
+          fontWeight="bold"
+          color="teal.600"
+          cursor="pointer"
+          onClick={() => navigate('/')}
+          _hover={{ opacity: 0.8 }}
+          transition="opacity 0.2s"
+        >
           Open Social
         </Text>
 

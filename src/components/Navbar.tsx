@@ -64,8 +64,6 @@ export function Navbar({ user, onLogout }: NavbarProps) {
           </MenuRoot>
         ) : (
           <Button
-            as="a"
-            href="/login"
             colorPalette="teal"
             size="sm"
             onClick={(e) => {

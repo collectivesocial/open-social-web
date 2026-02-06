@@ -22,9 +22,10 @@ export function Navbar({ user, onLogout }: NavbarProps) {
   return (
     <Box
       as="nav"
-      bg="white"
+      bg="bg.nav"
+      backdropFilter="blur(12px)"
       borderBottom="1px solid"
-      borderColor="gray.200"
+      borderColor="border.subtle"
       px={{ base: 4, md: 6 }}
       py={3}
       position="sticky"
@@ -36,11 +37,12 @@ export function Navbar({ user, onLogout }: NavbarProps) {
         <Text
           fontSize={{ base: 'lg', md: 'xl' }}
           fontWeight="bold"
-          color="teal.600"
+          fontFamily="heading"
+          color="accent.default"
           cursor="pointer"
           onClick={() => navigate('/')}
-          _hover={{ opacity: 0.8 }}
-          transition="opacity 0.2s"
+          _hover={{ color: 'accent.hover' }}
+          transition="color 0.2s"
         >
           Open Social
         </Text>
@@ -63,7 +65,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
                   <Text fontWeight="medium" fontSize="sm">
                     {user.displayName || user.handle}
                   </Text>
-                  <Text fontSize="xs" color="gray.600">
+                  <Text fontSize="xs" color="fg.muted">
                     @{user.handle}
                   </Text>
                 </Box>
@@ -78,7 +80,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
           </MenuRoot>
         ) : (
           <Button
-            colorPalette="teal"
+            colorPalette="accent"
             variant="solid"
             size="sm"
             onClick={(e) => {

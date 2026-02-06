@@ -170,9 +170,9 @@ export function CommunityPage() {
 
   if (loading) {
     return (
-      <Box minH="100vh" bg="gray.50">
+      <Box minH="100vh" bg="bg.page">
         <Center h="100vh">
-          <Spinner size="xl" color="teal.500" />
+          <Spinner size="xl" color="accent.default" />
         </Center>
       </Box>
     );
@@ -180,10 +180,10 @@ export function CommunityPage() {
 
   if (error && !details) {
     return (
-      <Box minH="100vh" bg="gray.50">
+      <Box minH="100vh" bg="bg.page">
         <Container maxW="1920px" py={8}>
           <VStack gap={4}>
-            <Text color="red.600">{error}</Text>
+            <Text color="fg.error">{error}</Text>
             <Button onClick={() => navigate('/')}>Go Back</Button>
           </VStack>
         </Container>
@@ -198,12 +198,12 @@ export function CommunityPage() {
   const { community, memberCount, isAdmin, userRole } = details;
 
   return (
-    <Box minH="100vh" bg="gray.50">
+    <Box minH="100vh" bg="bg.page">
       {/* Banner */}
       {community.banner && (
         <Box
           h={{ base: '150px', md: '250px' }}
-          bg="gray.300"
+          bg="bg.subtle"
           backgroundImage={`url(${community.banner})`}
           backgroundSize="cover"
           backgroundPosition="center"
@@ -226,8 +226,8 @@ export function CommunityPage() {
                 src={community.avatar}
                 size="2xl"
                 borderWidth="4px"
-                borderColor="white"
-                bg="white"
+                borderColor="bg.card"
+                bg="bg.card"
               />
               {isAdmin && (
                 <Box mt={2}>
@@ -291,9 +291,9 @@ export function CommunityPage() {
                       style={{
                         width: '100%',
                         padding: '0.5rem 0.75rem',
-                        borderRadius: '0.375rem',
-                        border: '1px solid #e2e8f0',
-                        backgroundColor: 'white',
+                        borderRadius: '0.75rem',
+                        border: '1px solid var(--chakra-colors-border-card)',
+                        backgroundColor: 'var(--chakra-colors-bg-subtle)',
                         fontSize: '1rem',
                         cursor: 'pointer',
                       }}
@@ -306,8 +306,7 @@ export function CommunityPage() {
                   <HStack gap={2}>
                     <Button
                       onClick={handleSaveProfile}
-                      colorPalette="teal"
-                      bg="teal"
+                      colorPalette="accent"
                       disabled={saving}
                       size="sm"
                     >
@@ -327,14 +326,14 @@ export function CommunityPage() {
               ) : (
                 <>
                   <HStack gap={3} align="center">
-                    <Heading size={{ base: 'lg', md: 'xl' }}>{community.displayName}</Heading>
+                    <Heading size={{ base: 'lg', md: 'xl' }} fontFamily="heading">{community.displayName}</Heading>
                     {isAdmin && (
                       <Button
                         onClick={handleEditClick}
                         size="sm"
                         variant="ghost"
                         bg="transparent"
-                        colorPalette="teal"
+                        colorPalette="accent"
                       >
                         Edit
                       </Button>
@@ -342,10 +341,10 @@ export function CommunityPage() {
                   </HStack>
                   
                   <HStack gap={2}>
-                    <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
+                    <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
                       {memberCount} {memberCount === 1 ? 'member' : 'members'}
                     </Text>
-                    <Text color="gray.400">•</Text>
+                    <Text color="fg.subtle">•</Text>
                     <Badge
                       colorPalette={
                         community.type === 'open'
@@ -364,9 +363,9 @@ export function CommunityPage() {
                     </Badge>
                     {userRole && (
                       <>
-                        <Text color="gray.400">•</Text>
+                        <Text color="fg.subtle">•</Text>
                         <Text
-                          color="teal.600"
+                          color="accent.default"
                           fontSize={{ base: 'sm', md: 'md' }}
                           fontWeight="medium"
                         >
@@ -377,12 +376,12 @@ export function CommunityPage() {
                   </HStack>
 
                   {community.description && (
-                    <Text color="gray.700" fontSize={{ base: 'sm', md: 'md' }}>
+                    <Text color="fg.default" fontSize={{ base: 'sm', md: 'md' }}>
                       {community.description}
                     </Text>
                   )}
 
-                  <Text color="gray.500" fontSize="xs" fontFamily="mono">
+                  <Text color="fg.subtle" fontSize="xs" fontFamily="mono">
                     {community.did}
                   </Text>
                 </>
@@ -392,16 +391,16 @@ export function CommunityPage() {
 
           {error && (
             <Box bg="red.50" borderRadius="md" p={4}>
-              <Text color="red.600">{error}</Text>
+              <Text color="fg.error">{error}</Text>
             </Box>
           )}
 
           {/* Content sections will go here */}
-          <Box bg="white" borderRadius="lg" p={6} shadow="sm">
-            <Heading size="md" mb={4}>
+          <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+            <Heading size="md" mb={4} fontFamily="heading">
               Community Activity
             </Heading>
-            <Text color="gray.600">More features coming soon...</Text>
+            <Text color="fg.muted">More features coming soon...</Text>
           </Box>
         </VStack>
       </Container>

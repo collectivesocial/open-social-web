@@ -91,9 +91,8 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
     }}>
       <DialogTrigger asChild>
         <Button
-          colorPalette="teal"
+          colorPalette="accent"
           variant="solid"
-          bg="teal"
           size={{ base: 'md', md: 'lg' }}
           width={{ base: 'full', md: 'auto' }}
         >
@@ -162,13 +161,13 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                   placeholder="myapp.example.com"
                   disabled={loading}
                 />
-                <Text fontSize="xs" color="gray.500" mt={1}>
+                <Text fontSize="xs" color="fg.subtle" mt={1}>
                   The domain where your app will run
                 </Text>
               </Box>
 
               {error && (
-                <Text color="red.600" fontSize="sm">{error}</Text>
+                <Text color="fg.error" fontSize="sm">{error}</Text>
               )}
             </VStack>
           )}
@@ -176,7 +175,7 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
 
         <DialogFooter>
           {result ? (
-            <Button onClick={handleClose} colorPalette="teal" variant="solid">
+            <Button onClick={handleClose} colorPalette="accent" variant="solid">
               Done
             </Button>
           ) : (
@@ -185,7 +184,7 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                 Cancel
               </Button>
               <Button
-                colorPalette="teal"
+                colorPalette="accent"
                 variant="solid"
                 onClick={handleSubmit}
                 disabled={loading || !name || !domain}

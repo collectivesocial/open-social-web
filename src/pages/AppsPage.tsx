@@ -45,11 +45,11 @@ function AppCard({
   };
 
   return (
-    <Box bg="white" borderRadius="lg" shadow="sm" p={5} borderWidth="1px" borderColor="gray.200">
+    <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
       <Flex justify="space-between" align="start" mb={3}>
         <Box>
-          <Heading size="sm" mb={1}>{app.name}</Heading>
-          <Text fontSize="sm" color="gray.600">{app.domain}</Text>
+          <Heading size="sm" mb={1} fontFamily="heading">{app.name}</Heading>
+          <Text fontSize="sm" color="fg.muted">{app.domain}</Text>
         </Box>
         <Badge
           colorPalette={app.status === 'active' ? 'green' : 'red'}
@@ -60,13 +60,13 @@ function AppCard({
       </Flex>
 
       <Box mb={3}>
-        <Text fontSize="xs" color="gray.500" mb={1}>App ID</Text>
+        <Text fontSize="xs" color="fg.subtle" mb={1}>App ID</Text>
         <Code fontSize="xs" p={1} borderRadius="sm">{app.app_id}</Code>
       </Box>
 
       <Box mb={3}>
         <Flex justify="space-between" align="center" mb={1}>
-          <Text fontSize="xs" color="gray.500">API Key</Text>
+          <Text fontSize="xs" color="fg.subtle">API Key</Text>
           <Flex gap={1}>
             <Button size="xs" variant="ghost" onClick={() => setShowKey(!showKey)}>
               {showKey ? 'Hide' : 'Show'}
@@ -83,7 +83,7 @@ function AppCard({
         </Code>
       </Box>
 
-      <Text fontSize="xs" color="gray.400" mb={3}>
+      <Text fontSize="xs" color="fg.subtle" mb={3}>
         Created {new Date(app.created_at).toLocaleDateString()}
       </Text>
 
@@ -191,8 +191,8 @@ export function AppsPage() {
           gap={{ base: 4, md: 0 }}
         >
           <Box>
-            <Heading size={{ base: 'md', md: 'lg' }} mb={2}>Developer Apps</Heading>
-            <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
+            <Heading size={{ base: 'md', md: 'lg' }} mb={2} fontFamily="heading">Developer Apps</Heading>
+            <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
               Register and manage apps that use the OpenSocial API
             </Text>
           </Box>
@@ -219,7 +219,7 @@ export function AppsPage() {
 
         {loading ? (
           <Center py={12}>
-            <Spinner size="xl" color="teal.500" />
+            <Spinner size="xl" color="accent.default" />
           </Center>
         ) : authError ? (
           <EmptyState

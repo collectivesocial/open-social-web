@@ -83,9 +83,8 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
     <DialogRoot open={open} onOpenChange={(e: OpenChangeDetails) => setOpen(e.open)}>
       <DialogTrigger asChild>
         <Button 
-          colorPalette="teal" 
+          colorPalette="accent" 
           variant="solid" 
-          bg="teal" 
           size={{ base: 'md', md: 'lg' }}
           width={{ base: 'full', md: 'auto' }}
         >
@@ -110,7 +109,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
                 value={existingDid}
                 onChange={(e) => setExistingDid(e.target.value)}
               />
-              <Text fontSize="xs" color="gray.500" mt={1}>
+              <Text fontSize="xs" color="fg.subtle" mt={1}>
                 The DID of the account you want to use as a community
               </Text>
             </Box>
@@ -125,7 +124,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
                 value={appPassword}
                 onChange={(e) => setAppPassword(e.target.value)}
               />
-              <Text fontSize="xs" color="gray.500" mt={1}>
+              <Text fontSize="xs" color="fg.subtle" mt={1}>
                 Generate an app password in your account settings
               </Text>
             </Box>
@@ -154,7 +153,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
             </Box>
 
             {error && (
-              <Text color="red.600" fontSize="sm">
+              <Text color="fg.error" fontSize="sm">
                 {error}
               </Text>
             )}
@@ -166,9 +165,8 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
             Cancel
           </Button>
           <Button
-            colorPalette="teal"
+            colorPalette="accent"
             variant="solid"
-            bg="teal"
             onClick={handleSubmit}
             disabled={!isValid || loading}
             loading={loading}

@@ -75,10 +75,10 @@ function App() {
 
   if (loading) {
     return (
-      <Box minH="100vh" bg="gray.50">
+      <Box minH="100vh" bg="bg.page">
         <Navbar user={null} onLogout={() => {}} />
         <Center h="calc(100vh - 60px)">
-          <Spinner size="xl" color="teal.500" />
+          <Spinner size="xl" color="accent.default" />
         </Center>
       </Box>
     );
@@ -86,7 +86,7 @@ function App() {
 
   if (!user) {
     return (
-      <Box minH="100vh" bg="gray.50">
+      <Box minH="100vh" bg="bg.page">
         <Navbar user={null} onLogout={() => {}} />
         <LoginPage apiUrl={API_URL} />
       </Box>
@@ -94,7 +94,7 @@ function App() {
   }
 
   return (
-    <Box minH="100vh" bg="gray.50">
+    <Box minH="100vh" bg="bg.page">
       <Navbar user={user} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -169,8 +169,8 @@ function HomePage() {
             gap={{ base: 4, md: 0 }}
           >
             <Box>
-              <Heading size={{ base: 'md', md: 'lg' }} mb={2}>My Communities</Heading>
-              <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>
+              <Heading size={{ base: 'md', md: 'lg' }} mb={2} fontFamily="heading">My Communities</Heading>
+              <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
                 Communities you've joined on OpenSocial
               </Text>
             </Box>
@@ -239,16 +239,16 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
     <Container maxW="container.sm" py={20}>
       <VStack gap={8} align="stretch">
         <Box textAlign="center">
-          <Heading size="2xl" mb={2} color="gray.900">OpenSocial</Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Heading size="2xl" mb={2} color="fg.default" fontFamily="heading">OpenSocial</Heading>
+          <Text fontSize="lg" color="fg.muted">
             Community management for ATProto apps
           </Text>
         </Box>
         
-        <Box bg="white" p={8} borderRadius="lg" shadow="md">
+        <Box bg="bg.card" p={8} borderRadius="xl" shadow="md" borderWidth="1px" borderColor="border.card">
           <form onSubmit={handleLogin}>
             <VStack gap={4} align="stretch">
-              <Heading size="lg" color="gray.900">Login with ATProtocol</Heading>
+              <Heading size="lg" color="fg.default" fontFamily="heading">Login with ATProtocol</Heading>
               <Input
                 type="text"
                 value={handle}
@@ -261,7 +261,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
               <Button
                 type="submit"
                 disabled={isLoading || !handle}
-                colorPalette="teal"
+                colorPalette="accent"
                 variant="solid"
                 size="lg"
                 width="full"
@@ -269,7 +269,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
                 {isLoading ? 'Redirecting...' : 'Login'}
               </Button>
               {error && (
-                <Text color="red.600" fontSize="sm">
+                <Text color="fg.error" fontSize="sm">
                   {error}
                 </Text>
               )}

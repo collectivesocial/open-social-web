@@ -77,8 +77,8 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
 
   return (
     <Box
-      bg="white"
-      borderRadius="lg"
+      bg="bg.card"
+      borderRadius="xl"
       shadow="sm"
       p={5}
       cursor="pointer"
@@ -92,10 +92,10 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
         }
       }}
       _hover={{ shadow: 'md', transform: 'translateY(-2px)' }}
-      _focusVisible={{ outline: '2px solid', outlineColor: 'teal.500', outlineOffset: '2px' }}
+      _focusVisible={{ outline: '2px solid', outlineColor: 'border.focus', outlineOffset: '2px' }}
       transition="all 0.2s"
       borderWidth="1px"
-      borderColor={status === 'pending' ? 'orange.200' : 'gray.200'}
+      borderColor={status === 'pending' ? 'orange.200' : 'border.card'}
       position="relative"
     >
       {isOnlyAdmin && (
@@ -127,11 +127,11 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
               <Text mb={2}>
                 Are you sure you want to delete <strong>{community.displayName}</strong>?
               </Text>
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize="sm" color="fg.muted">
                 This will remove the community from OpenSocial. This action cannot be undone.
               </Text>
               {deleteError && (
-                <Text color="red.600" fontSize="sm" mt={3}>
+                <Text color="fg.error" fontSize="sm" mt={3}>
                   {deleteError}
                 </Text>
               )}
@@ -179,13 +179,13 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
             <Box
               boxSize="60px"
               borderRadius="md"
-              bg="teal.100"
+              bg="accent.muted"
               display="flex"
               alignItems="center"
               justifyContent="center"
               fontSize="2xl"
               fontWeight="bold"
-              color="teal.700"
+              color="accent.default"
             >
               {community.displayName.charAt(0).toUpperCase()}
             </Box>
@@ -195,7 +195,7 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
         {/* Content */}
         <Box flex={1} minW={0}>
           <Flex justify="space-between" align="flex-start" mb={2}>
-            <Heading size="md" lineClamp={1}>
+            <Heading size="md" lineClamp={1} fontFamily="heading">
               {community.displayName}
             </Heading>
             <Badge
@@ -208,12 +208,12 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
           </Flex>
 
           {community.description && (
-            <Text color="gray.600" fontSize="sm" lineClamp={2} mb={2}>
+            <Text color="fg.muted" fontSize="sm" lineClamp={2} mb={2}>
               {community.description}
             </Text>
           )}
 
-          <Text fontSize="xs" color="gray.500">
+          <Text fontSize="xs" color="fg.subtle">
             Joined {new Date(membership.joinedAt).toLocaleDateString()}
           </Text>
         </Box>
@@ -224,7 +224,7 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
 
 export function CommunityCardSkeleton() {
   return (
-    <Box bg="white" borderRadius="lg" shadow="sm" p={5} borderWidth="1px" borderColor="gray.200">
+    <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
       <Flex gap={4}>
         <Skeleton boxSize="60px" borderRadius="md" />
         <Box flex={1}>

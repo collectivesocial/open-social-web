@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -46,13 +46,7 @@ export function CommunityPage() {
   const [editType, setEditType] = useState<'open' | 'admin-approved' | 'private'>('open');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (did) {
-      fetchCommunityDetails();
-    }
-  }, [did]);
-
-  const fetchCommunityDetails = async () => {
+    const fetchCommunityDetails = useCallback(async () => {
     try {
       const response = await fetch(`/communities/${encodeURIComponent(did!)}`, {
         credentials: 'include',
@@ -69,7 +63,13 @@ export function CommunityPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [did]);
+
+  useEffect(() => {
+    if (did) {
+      fetchCommunityDetails();
+    }
+  }, [did, fetchCommunityDetails]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

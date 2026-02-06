@@ -68,6 +68,9 @@ export function Navbar({ user, onLogout }: NavbarProps) {
                   </Text>
                 </Box>
               </MenuItem>
+              <MenuItem value="apps" onClick={() => navigate('/apps')}>
+                Developer Apps
+              </MenuItem>
               <MenuItem value="logout" color="red.600" onClick={onLogout}>
                 Logout
               </MenuItem>

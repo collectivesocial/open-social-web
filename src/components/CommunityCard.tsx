@@ -1,5 +1,18 @@
-import { Box, Flex, Heading, Text, Badge, Image, Skeleton } from '@chakra-ui/react';
+import { Box, Flex, Heading, Text, Badge, Image, Skeleton, IconButton } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { FiTrash2 } from 'react-icons/fi';
+import {
+  DialogRoot,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogCloseTrigger,
+} from './ui/dialog';
+import { Button } from '@chakra-ui/react';
 
 interface Community {
   did: string;
@@ -14,18 +27,52 @@ interface Membership {
   joinedAt: string;
   status: 'active' | 'pending';
   community: Community;
+  isOnlyAdmin?: boolean;
 }
 
 interface CommunityCardProps {
   membership: Membership;
+  onDelete?: () => void;
 }
 
-export function CommunityCard({ membership }: CommunityCardProps) {
-  const { community, status } = membership;
+export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
+  const { community, status, isOnlyAdmin } = membership;
   const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleClick = () => {
     navigate(`/communities/${encodeURIComponent(community.did)}`);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError('');
+
+    try {
+      const response = await fetch(`/communities/${encodeURIComponent(community.did)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete community');
+      }
+
+      setDeleteOpen(false);
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete community');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -49,7 +96,74 @@ export function CommunityCard({ membership }: CommunityCardProps) {
       transition="all 0.2s"
       borderWidth="1px"
       borderColor={status === 'pending' ? 'orange.200' : 'gray.200'}
+      position="relative"
     >
+      {isOnlyAdmin && (
+        <DialogRoot open={deleteOpen} onOpenChange={(e) => setDeleteOpen(e.open)}>
+          <DialogTrigger asChild>
+            <IconButton
+              aria-label="Delete community"
+              size="sm"
+              variant="ghost"
+              colorPalette="red"
+              position="absolute"
+              top={2}
+              right={2}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteOpen(true);
+              }}
+              _hover={{ bg: 'red.50' }}
+            >
+              <FiTrash2 />
+            </IconButton>
+          </DialogTrigger>
+          <DialogContent onClick={(e) => e.stopPropagation()}>
+            <DialogHeader>
+              <DialogTitle>Delete Community</DialogTitle>
+              <DialogCloseTrigger />
+            </DialogHeader>
+            <DialogBody>
+              <Text mb={2}>
+                Are you sure you want to delete <strong>{community.displayName}</strong>?
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                This will remove the community from OpenSocial. This action cannot be undone.
+              </Text>
+              {deleteError && (
+                <Text color="red.600" fontSize="sm" mt={3}>
+                  {deleteError}
+                </Text>
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                bg="transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteOpen(false);
+                }}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorPalette="red"
+                bg="red.600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                disabled={deleting}
+                loading={deleting}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </DialogRoot>
+      )}
       <Flex gap={4} align="flex-start">
         {/* Avatar */}
         <Box flexShrink={0}>

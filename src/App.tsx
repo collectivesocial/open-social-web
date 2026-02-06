@@ -6,6 +6,7 @@ import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard
 import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
 import { CommunityPage } from './pages/CommunityPage';
+import { AppsPage } from './pages/AppsPage';
 import './App.css';
 
 // Use relative paths - Vite proxy will forward to backend
@@ -32,6 +33,7 @@ interface Membership {
   joinedAt: string;
   status: 'active' | 'pending';
   community: Community;
+  isOnlyAdmin?: boolean;
 }
 
 function App() {
@@ -96,6 +98,7 @@ function App() {
       <Navbar user={user} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/apps" element={<AppsPage />} />
         <Route path="/communities/:did" element={<CommunityPage />} />
       </Routes>
     </Box>
@@ -119,7 +122,35 @@ function HomePage() {
       
       if (response.ok) {
         const data = await response.json();
-        setMemberships(data.memberships);
+        
+        // For each membership, check if user is the only admin
+        const membershipsWithAdminInfo = await Promise.all(
+          data.memberships.map(async (membership: Membership) => {
+            try {
+              const communityResponse = await fetch(
+                `/communities/${encodeURIComponent(membership.community.did)}`,
+                { credentials: 'include' }
+              );
+              
+              if (communityResponse.ok) {
+                const communityData = await communityResponse.json();
+                const admins = communityData.community?.admins || [];
+                const isAdmin = communityData.is_admin;
+                const isOnlyAdmin = isAdmin && admins.length === 1;
+                
+                return {
+                  ...membership,
+                  isOnlyAdmin,
+                };
+              }
+            } catch (err) {
+              console.error('Failed to check admin status:', err);
+            }
+            return membership;
+          })
+        );
+        
+        setMemberships(membershipsWithAdminInfo);
       }
     } catch (error) {
       console.error('Failed to fetch memberships:', error);
@@ -161,7 +192,11 @@ function HomePage() {
           ) : (
             <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
               {memberships.map((membership) => (
-                <CommunityCard key={membership.uri} membership={membership} />
+                <CommunityCard 
+                  key={membership.uri} 
+                  membership={membership}
+                  onDelete={fetchMemberships}
+                />
               ))}
             </Grid>
           )}

@@ -11,12 +11,15 @@ import {
 import {
   Box,
   Button,
+  Flex,
   Input,
   VStack,
   Text,
   Textarea,
+  Switch,
 } from '@chakra-ui/react';
 import { useState } from 'react';
+import { csrfHeaders } from '../utils/csrf';
 
 interface OpenChangeDetails {
   open: boolean;
@@ -32,6 +35,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
   const [description, setDescription] = useState('');
   const [existingDid, setExistingDid] = useState('');
   const [appPassword, setAppPassword] = useState('');
+  const [requireApproval, setRequireApproval] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,7 +46,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
     try {
       const response = await fetch('/users/me/communities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         credentials: 'include',
         body: JSON.stringify({
           type: 'existing',
@@ -50,6 +54,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
           appPassword,
           displayName,
           description,
+          communityType: requireApproval ? 'admin-approved' : 'open',
         }),
       });
 
@@ -74,6 +79,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
     setDescription('');
     setExistingDid('');
     setAppPassword('');
+    setRequireApproval(false);
     setError('');
   };
 
@@ -150,6 +156,26 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />
+            </Box>
+
+            <Box>
+              <Flex align="center" justify="space-between">
+                <Box>
+                  <Text fontWeight="medium">Require approval for new members</Text>
+                  <Text fontSize="xs" color="fg.subtle">
+                    When enabled, new members must be approved by an admin before joining
+                  </Text>
+                </Box>
+                <Switch.Root
+                  checked={requireApproval}
+                  onCheckedChange={(e) => setRequireApproval(e.checked)}
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Root>
+              </Flex>
             </Box>
 
             {error && (

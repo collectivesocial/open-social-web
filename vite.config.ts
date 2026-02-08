@@ -14,7 +14,17 @@ export default defineConfig({
       '/logout': 'http://127.0.0.1:3001',
       '/users': 'http://127.0.0.1:3001',
       '/oauth': 'http://127.0.0.1:3001',
-      '/communities': 'http://127.0.0.1:3001',
+      '/communities': {
+        target: 'http://127.0.0.1:3001',
+        bypass(req) {
+          // When the browser navigates/refreshes (Accept: text/html),
+          // serve the SPA index.html so React Router handles the route.
+          // Fetch/XHR calls from the app won't include text/html in Accept.
+          if (req.headers.accept?.includes('text/html')) {
+            return '/index.html';
+          }
+        },
+      },
       '/api': 'http://127.0.0.1:3001',
     },
   },

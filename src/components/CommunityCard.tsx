@@ -1,5 +1,6 @@
 import { Box, Flex, Heading, Text, Badge, Image, Skeleton, IconButton } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { csrfHeaders } from '../utils/csrf';
 import { useState } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
 import {
@@ -56,6 +57,7 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...csrfHeaders(),
         },
       });
 

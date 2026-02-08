@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar';
 import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard';
 import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
+import { csrfHeaders } from './utils/csrf';
 import { CommunityPage } from './pages/CommunityPage';
 import { AppsPage } from './pages/AppsPage';
 import './App.css';
@@ -66,6 +67,7 @@ function App() {
       await fetch(`${API_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers: { ...csrfHeaders() },
       });
       setUser(null);
     } catch (error) {
@@ -109,9 +111,45 @@ function HomePage() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [membershipsLoading, setMembershipsLoading] = useState(false);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Community[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
   useEffect(() => {
     fetchMemberships();
   }, []);
+
+  // Debounced community search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setSearchLoading(true);
+      setHasSearched(true);
+      try {
+        const params = new URLSearchParams({ q: searchQuery.trim() });
+        const response = await fetch(`${API_URL}/communities/search?${params.toString()}`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.communities);
+        }
+      } catch (err) {
+        console.error('Search failed:', err);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   const fetchMemberships = async () => {
     setMembershipsLoading(true);
@@ -162,6 +200,80 @@ function HomePage() {
   return (
     <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <VStack gap={6} align="stretch">
+          {/* Search Communities */}
+          <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+            <Heading size="md" mb={3} fontFamily="heading">
+              Find Communities
+            </Heading>
+            <Input
+              placeholder="Search communities by name or handle..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              size="lg"
+            />
+
+            {searchLoading && (
+              <Center py={4}>
+                <Spinner size="sm" color="accent.default" />
+              </Center>
+            )}
+
+            {!searchLoading && hasSearched && searchResults.length === 0 && (
+              <Text color="fg.muted" mt={3} textAlign="center">
+                No communities found matching "{searchQuery}"
+              </Text>
+            )}
+
+            {!searchLoading && searchResults.length > 0 && (
+              <VStack gap={2} mt={4} align="stretch">
+                {searchResults.map((community) => (
+                  <Flex
+                    key={community.did}
+                    align="center"
+                    gap={3}
+                    p={3}
+                    borderRadius="lg"
+                    borderWidth="1px"
+                    borderColor="border.card"
+                    bg="bg.subtle"
+                    _hover={{ bg: 'bg.muted', cursor: 'pointer' }}
+                    onClick={() => {
+                      window.location.href = `/communities/${encodeURIComponent(community.did)}`;
+                    }}
+                  >
+                    <Box
+                      w="40px"
+                      h="40px"
+                      borderRadius="full"
+                      bg="accent.subtle"
+                      overflow="hidden"
+                      flexShrink={0}
+                    >
+                      {community.avatar && (
+                        <img
+                          src={community.avatar}
+                          alt={community.displayName}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      )}
+                    </Box>
+                    <Box flex={1} minW={0}>
+                      <Text fontWeight="medium" fontSize="sm" truncate>
+                        {community.displayName}
+                      </Text>
+                      {community.description && (
+                        <Text color="fg.muted" fontSize="xs" truncate>
+                          {community.description}
+                        </Text>
+                      )}
+                    </Box>
+                  </Flex>
+                ))}
+              </VStack>
+            )}
+          </Box>
+
+          {/* My Communities */}
           <Flex 
             direction={{ base: 'column', md: 'row' }} 
             justify="space-between" 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { csrfHeaders } from '../utils/csrf';
 import {
   Box,
   Container,
@@ -14,6 +15,7 @@ import {
   Textarea,
   HStack,
   Badge,
+  Grid,
 } from '@chakra-ui/react';
 import { Avatar } from '../components/ui/avatar';
 
@@ -33,6 +35,21 @@ interface CommunityDetails {
   userRole?: string;
 }
 
+interface Member {
+  did: string;
+  handle?: string;
+  displayName?: string;
+  avatar?: string;
+  confirmedAt?: string;
+  isAdmin?: boolean;
+}
+
+interface MembersResponse {
+  members: Member[];
+  total: number;
+  callerIsAdmin: boolean;
+}
+
 export function CommunityPage() {
   const { did } = useParams<{ did: string }>();
   const navigate = useNavigate();
@@ -45,6 +62,12 @@ export function CommunityPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editType, setEditType] = useState<'open' | 'admin-approved' | 'private'>('open');
   const [saving, setSaving] = useState(false);
+
+  // Member list state
+  const [members, setMembers] = useState<Member[]>([]);
+  const [membersTotal, setMembersTotal] = useState(0);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
 
     const fetchCommunityDetails = useCallback(async () => {
     try {
@@ -65,11 +88,42 @@ export function CommunityPage() {
     }
   }, [did]);
 
+  const fetchMembers = useCallback(async (search?: string) => {
+    if (!did) return;
+    setMembersLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const response = await fetch(
+        `/communities/${encodeURIComponent(did)}/members?${params.toString()}`,
+        { credentials: 'include' }
+      );
+      if (response.ok) {
+        const data: MembersResponse = await response.json();
+        setMembers(data.members);
+        setMembersTotal(data.total);
+      }
+    } catch (err) {
+      console.error('Failed to fetch members:', err);
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [did]);
+
   useEffect(() => {
     if (did) {
       fetchCommunityDetails();
+      fetchMembers();
     }
-  }, [did, fetchCommunityDetails]);
+  }, [did, fetchCommunityDetails, fetchMembers]);
+
+  // Debounce member search
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchMembers(memberSearch);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [memberSearch, fetchMembers]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,6 +151,7 @@ export function CommunityPage() {
       const response = await fetch(`/communities/${encodeURIComponent(did!)}/avatar`, {
         method: 'POST',
         credentials: 'include',
+        headers: { ...csrfHeaders() },
         body: formData,
       });
 
@@ -145,6 +200,7 @@ export function CommunityPage() {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...csrfHeaders(),
         },
         body: JSON.stringify({
           displayName: editDisplayName.trim(),
@@ -395,12 +451,73 @@ export function CommunityPage() {
             </Box>
           )}
 
-          {/* Content sections will go here */}
+          {/* Members Section */}
           <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
-            <Heading size="md" mb={4} fontFamily="heading">
-              Community Activity
-            </Heading>
-            <Text color="fg.muted">More features coming soon...</Text>
+            <Flex justify="space-between" align="center" mb={4}>
+              <Heading size="md" fontFamily="heading">
+                Members ({membersTotal})
+              </Heading>
+            </Flex>
+
+            <Input
+              placeholder="Search members..."
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              mb={4}
+              size="sm"
+            />
+
+            {membersLoading ? (
+              <Center py={8}>
+                <Spinner size="md" color="accent.default" />
+              </Center>
+            ) : members.length === 0 ? (
+              <Text color="fg.muted" textAlign="center" py={4}>
+                {memberSearch ? 'No members found matching your search.' : 'No members yet.'}
+              </Text>
+            ) : (
+              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
+                {members.map((member) => (
+                  <Flex
+                    key={member.did}
+                    align="center"
+                    gap={3}
+                    p={3}
+                    borderRadius="lg"
+                    borderWidth="1px"
+                    borderColor="border.card"
+                    bg="bg.subtle"
+                  >
+                    <Avatar
+                      name={member.displayName || member.handle || member.did}
+                      src={member.avatar}
+                      size="sm"
+                    />
+                    <Box flex={1} minW={0}>
+                      <HStack gap={2}>
+                        <Text
+                          fontWeight="medium"
+                          fontSize="sm"
+                          truncate
+                        >
+                          {member.displayName || member.handle || member.did.slice(0, 20) + '...'}
+                        </Text>
+                        {member.isAdmin && (
+                          <Badge colorPalette="purple" variant="subtle" size="sm">
+                            Admin
+                          </Badge>
+                        )}
+                      </HStack>
+                      {member.handle && (
+                        <Text color="fg.muted" fontSize="xs" truncate>
+                          @{member.handle}
+                        </Text>
+                      )}
+                    </Box>
+                  </Flex>
+                ))}
+              </Grid>
+            )}
           </Box>
         </VStack>
       </Container>

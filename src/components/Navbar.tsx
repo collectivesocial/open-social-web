@@ -1,4 +1,4 @@
-import { Box, Flex, Button, Text } from '@chakra-ui/react';
+import { Box, Flex, Button, Text, HStack } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from './ui/avatar';
 import { MenuRoot, MenuTrigger, MenuContent, MenuItem } from './ui/menu';
@@ -33,19 +33,49 @@ export function Navbar({ user, onLogout }: NavbarProps) {
       zIndex={10}
     >
       <Flex justify="space-between" align="center" maxW="1920px" mx="auto">
-        {/* Logo/Brand */}
-        <Text
-          fontSize={{ base: 'lg', md: 'xl' }}
-          fontWeight="bold"
-          fontFamily="heading"
-          color="accent.default"
-          cursor="pointer"
-          onClick={() => navigate('/')}
-          _hover={{ color: 'accent.hover' }}
-          transition="color 0.2s"
-        >
-          Open Social
-        </Text>
+        {/* Logo + nav links */}
+        <HStack gap={{ base: 4, md: 6 }}>
+          <Text
+            fontSize={{ base: 'lg', md: 'xl' }}
+            fontWeight="bold"
+            fontFamily="heading"
+            color="accent.default"
+            cursor="pointer"
+            onClick={() => navigate('/')}
+            _hover={{ color: 'accent.hover' }}
+            transition="color 0.2s"
+          >
+            Open Social
+          </Text>
+
+          {/* Top-level nav links (authenticated only, hidden on xs) */}
+          {user && (
+            <HStack gap={{ base: 3, md: 5 }} display={{ base: 'none', sm: 'flex' }}>
+              <Text
+                fontSize="sm"
+                fontWeight="medium"
+                color="fg.muted"
+                cursor="pointer"
+                onClick={() => navigate('/')}
+                _hover={{ color: 'accent.default' }}
+                transition="color 0.2s"
+              >
+                Communities
+              </Text>
+              <Text
+                fontSize="sm"
+                fontWeight="medium"
+                color="fg.muted"
+                cursor="pointer"
+                onClick={() => navigate('/apps')}
+                _hover={{ color: 'accent.default' }}
+                transition="color 0.2s"
+              >
+                Developer Apps
+              </Text>
+            </HStack>
+          )}
+        </HStack>
 
         {/* Right side - User menu or Login button */}
         {user ? (
@@ -69,6 +99,9 @@ export function Navbar({ user, onLogout }: NavbarProps) {
                     @{user.handle}
                   </Text>
                 </Box>
+              </MenuItem>
+              <MenuItem value="communities" onClick={() => navigate('/')}>
+                Communities
               </MenuItem>
               <MenuItem value="apps" onClick={() => navigate('/apps')}>
                 Developer Apps

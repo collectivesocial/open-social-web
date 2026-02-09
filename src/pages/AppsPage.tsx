@@ -12,18 +12,211 @@ import {
   Spinner,
   Center,
   Badge,
+  Input,
+  HStack,
 } from '@chakra-ui/react';
 import { RegisterAppModal } from '../components/RegisterAppModal';
 import { EmptyState } from '../components/EmptyState';
+import { api } from '../utils/api';
+import type { AppInfo, AppDefaultPermission } from '../types';
 
-interface AppInfo {
-  app_id: string;
-  name: string;
-  domain: string;
-  api_key: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+const PERMISSION_LEVELS = ['member', 'admin'] as const;
+
+function PermissionSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        width: '100%',
+        padding: '4px 8px',
+        borderRadius: '6px',
+        border: '1px solid var(--chakra-colors-border-card)',
+        backgroundColor: 'var(--chakra-colors-bg-subtle)',
+        fontSize: '0.75rem',
+      }}
+    >
+      {PERMISSION_LEVELS.map((level) => (
+        <option key={level} value={level}>{level}</option>
+      ))}
+    </select>
+  );
+}
+
+function AppDefaultPermissionsSection({ app }: { app: AppInfo }) {
+  const [permissions, setPermissions] = useState<AppDefaultPermission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newCollection, setNewCollection] = useState('');
+  const [collectionError, setCollectionError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const domainPrefix = app.domain.split('.').reverse().join('.') + '.';
+
+  const fetchPermissions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.get<{ permissions: AppDefaultPermission[] }>(
+        `/api/v1/apps/${app.app_id}/default-permissions`,
+      );
+      setPermissions(data.permissions);
+    } catch {
+      // If 404, no permissions exist yet — that's fine
+      setPermissions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [app.app_id]);
+
+  useEffect(() => {
+    fetchPermissions();
+  }, [fetchPermissions]);
+
+  const validateCollection = (collection: string): boolean => {
+    return collection.startsWith(domainPrefix);
+  };
+
+  const addPermission = async () => {
+    const trimmed = newCollection.trim();
+    if (!trimmed) return;
+
+    if (!validateCollection(trimmed)) {
+      setCollectionError(`Collection must start with "${domainPrefix}"`);
+      return;
+    }
+
+    if (permissions.some((p) => p.collection === trimmed)) {
+      setCollectionError('This collection already exists');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await api.post(`/api/v1/apps/${app.app_id}/default-permissions`, {
+        collection: trimmed,
+        defaultCanCreate: 'member',
+        defaultCanRead: 'member',
+        defaultCanUpdate: 'member',
+        defaultCanDelete: 'admin',
+      });
+      await fetchPermissions();
+      setNewCollection('');
+      setCollectionError('');
+    } catch (err: any) {
+      setCollectionError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePermission = async (perm: AppDefaultPermission, field: string, value: string) => {
+    try {
+      await api.put(`/api/v1/apps/${app.app_id}/default-permissions`, {
+        collection: perm.collection,
+        [field]: value,
+      });
+      await fetchPermissions();
+    } catch (err: any) {
+      console.error('Failed to update permission:', err);
+    }
+  };
+
+  const removePermission = async (collection: string) => {
+    try {
+      await api.del(`/api/v1/apps/${app.app_id}/default-permissions`, { collection });
+      await fetchPermissions();
+    } catch (err: any) {
+      console.error('Failed to remove permission:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Center py={4}>
+        <Spinner size="sm" color="accent.default" />
+      </Center>
+    );
+  }
+
+  return (
+    <Box mt={3} pt={3} borderTopWidth="1px" borderColor="border.subtle">
+      <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb={2}>
+        Default Collection Permissions (Lexicons)
+      </Text>
+
+      {permissions.length === 0 && (
+        <Text fontSize="xs" color="fg.subtle" mb={2}>
+          No lexicons defined yet. Add collections to define default permissions.
+        </Text>
+      )}
+
+      {permissions.map((perm) => (
+        <Box
+          key={perm.collection}
+          borderWidth="1px"
+          borderColor="border.card"
+          borderRadius="md"
+          p={2}
+          mb={2}
+          bg="bg.subtle"
+        >
+          <Flex justify="space-between" align="center" mb={2}>
+            <Code fontSize="xs">{perm.collection}</Code>
+            <Button
+              size="xs"
+              variant="ghost"
+              colorPalette="red"
+              onClick={() => removePermission(perm.collection)}
+            >
+              ✕
+            </Button>
+          </Flex>
+          <Flex gap={2} flexWrap="wrap">
+            {(
+              [
+                ['defaultCanCreate', 'Create'],
+                ['defaultCanRead', 'Read'],
+                ['defaultCanUpdate', 'Update'],
+                ['defaultCanDelete', 'Delete'],
+              ] as const
+            ).map(([field, label]) => (
+              <Box key={field} flex="1" minW="70px">
+                <Text fontSize="xs" color="fg.subtle">{label}</Text>
+                <PermissionSelect
+                  value={perm[field]}
+                  onChange={(v) => updatePermission(perm, field, v)}
+                />
+              </Box>
+            ))}
+          </Flex>
+        </Box>
+      ))}
+
+      <HStack gap={2} mt={2}>
+        <Input
+          value={newCollection}
+          onChange={(e) => {
+            setNewCollection(e.target.value);
+            setCollectionError('');
+          }}
+          placeholder={`${domainPrefix}your.collection`}
+          size="sm"
+          disabled={saving}
+        />
+        <Button size="sm" variant="outline" onClick={addPermission} disabled={saving} flexShrink={0}>
+          Add
+        </Button>
+      </HStack>
+      {collectionError && (
+        <Text fontSize="xs" color="fg.error" mt={1}>{collectionError}</Text>
+      )}
+    </Box>
+  );
 }
 
 function AppCard({
@@ -107,6 +300,8 @@ function AppCard({
           </Button>
         </Flex>
       )}
+
+      {app.status === 'active' && <AppDefaultPermissionsSection app={app} />}
     </Box>
   );
 }

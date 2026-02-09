@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Box, Container, VStack, Heading, Text, Input, Button, Spinner, Center, Grid, Flex } from '@chakra-ui/react';
 import { Navbar } from './components/Navbar';
 import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard';
@@ -7,6 +7,7 @@ import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
 import { csrfHeaders } from './utils/csrf';
 import { CommunityPage } from './pages/CommunityPage';
+import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
 import './App.css';
 
@@ -40,6 +41,7 @@ interface Membership {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
@@ -54,6 +56,13 @@ function App() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+
+        // Check for pending redirect after login (e.g., from join community flow)
+        const pendingRedirect = sessionStorage.getItem('pendingRedirect');
+        if (pendingRedirect) {
+          sessionStorage.removeItem('pendingRedirect');
+          navigate(pendingRedirect);
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -87,12 +96,17 @@ function App() {
   }
 
   if (!user) {
-    return (
-      <Box minH="100vh" bg="bg.page">
-        <Navbar user={null} onLogout={() => {}} />
-        <LoginPage apiUrl={API_URL} />
-      </Box>
-    );
+    // Allow community pages to be viewed without authentication
+    // (CommunityPage handles the non-auth state and shows join UI)
+    const isCommunityPage = window.location.pathname.startsWith('/communities/');
+    if (!isCommunityPage) {
+      return (
+        <Box minH="100vh" bg="bg.page">
+          <Navbar user={null} onLogout={() => {}} />
+          <LoginPage apiUrl={API_URL} />
+        </Box>
+      );
+    }
   }
 
   return (
@@ -102,6 +116,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/apps" element={<AppsPage />} />
         <Route path="/communities/:did" element={<CommunityPage />} />
+        <Route path="/communities/:did/settings" element={<CommunitySettingsPage />} />
       </Routes>
     </Box>
   );
@@ -121,9 +136,12 @@ function HomePage() {
     fetchMemberships();
   }, []);
 
-  // Debounced community search
+  // Debounced community search (min 3 characters for query, otherwise show top communities)
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    const trimmed = searchQuery.trim();
+
+    // If query is 1-2 chars, clear results and wait for more input
+    if (trimmed.length > 0 && trimmed.length < 3) {
       setSearchResults([]);
       setHasSearched(false);
       return;
@@ -131,9 +149,12 @@ function HomePage() {
 
     const timeout = setTimeout(async () => {
       setSearchLoading(true);
-      setHasSearched(true);
+      setHasSearched(trimmed.length >= 3);
       try {
-        const params = new URLSearchParams({ q: searchQuery.trim() });
+        const params = new URLSearchParams();
+        if (trimmed.length >= 3) {
+          params.set('query', trimmed);
+        }
         const response = await fetch(`${API_URL}/communities/search?${params.toString()}`, {
           credentials: 'include',
         });
@@ -146,7 +167,7 @@ function HomePage() {
       } finally {
         setSearchLoading(false);
       }
-    }, 400);
+    }, trimmed.length >= 3 ? 400 : 0);
 
     return () => clearTimeout(timeout);
   }, [searchQuery]);
@@ -216,6 +237,12 @@ function HomePage() {
               <Center py={4}>
                 <Spinner size="sm" color="accent.default" />
               </Center>
+            )}
+
+            {!searchLoading && searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
+              <Text color="fg.muted" mt={3} textAlign="center">
+                Type at least 3 characters to search
+              </Text>
             )}
 
             {!searchLoading && hasSearched && searchResults.length === 0 && (
@@ -328,6 +355,14 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
     setIsLoading(true);
 
     try {
+      // Store the current URL for redirect after login (if not already stored by join flow)
+      if (!sessionStorage.getItem('pendingRedirect')) {
+        const currentPath = window.location.pathname + window.location.search;
+        if (currentPath !== '/') {
+          sessionStorage.setItem('pendingRedirect', currentPath);
+        }
+      }
+
       // Create a form to submit to the API
       const form = document.createElement('form');
       form.method = 'POST';

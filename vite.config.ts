@@ -5,6 +5,9 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
+  // Base URL for assets when deployed to a subpath (e.g., GitHub Pages)
+  // Set to '/' for root domain or '/<repo-name>/' for GitHub Pages
+  base: process.env.VITE_BASE_PATH || '/',
   server: {
     port: 5174,
     host: '127.0.0.1',

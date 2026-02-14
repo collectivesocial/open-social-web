@@ -1,6 +1,7 @@
 import { Box, Flex, Heading, Text, Badge, Image, Skeleton, IconButton } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { csrfHeaders } from '../utils/csrf';
+import { apiUrl } from '../utils/api';
 import { useState } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
 import {
@@ -52,7 +53,7 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
     setDeleteError('');
 
     try {
-      const response = await fetch(`/communities/${encodeURIComponent(community.did)}`, {
+      const response = await fetch(apiUrl(`/communities/${encodeURIComponent(community.did)}`), {
         method: 'DELETE',
         credentials: 'include',
         headers: {

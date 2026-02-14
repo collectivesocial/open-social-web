@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { csrfHeaders } from '../utils/csrf';
 import { api } from '../utils/api';
+import { sanitizeRedirectUrl } from '../utils/redirect';
 import {
   Box,
   Container,
@@ -86,7 +87,7 @@ export function CommunityPage() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const action = searchParams.get('action');
-  const returnTo = searchParams.get('return_to');
+  const returnTo = sanitizeRedirectUrl(searchParams.get('return_to'));
 
     const fetchCommunityDetails = useCallback(async () => {
     try {

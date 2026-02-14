@@ -6,13 +6,14 @@ import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard
 import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
 import { csrfHeaders } from './utils/csrf';
+import { apiUrl } from './utils/api';
 import { CommunityPage } from './pages/CommunityPage';
 import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
 import './App.css';
 
-// Use relative paths - Vite proxy will forward to backend
-const API_URL = '';
+// Use VITE_API_URL from env for production, empty string for dev (Vite proxy)
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface User {
   did: string;
@@ -187,7 +188,7 @@ function HomePage() {
           data.memberships.map(async (membership: Membership) => {
             try {
               const communityResponse = await fetch(
-                `/communities/${encodeURIComponent(membership.community.did)}`,
+                apiUrl(`/communities/${encodeURIComponent(membership.community.did)}`),
                 { credentials: 'include' }
               );
               

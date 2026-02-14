@@ -1,0 +1,33 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <rect width="1200" height="630" fill="#1e40af"/>
+  <rect width="1200" height="630" fill="url(#gradient)"/>
+
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Large connected nodes in the center -->
+  <g opacity="0.3">
+    <circle cx="400" cy="315" r="80" fill="white"/>
+    <circle cx="600" cy="200" r="60" fill="white"/>
+    <circle cx="800" cy="315" r="80" fill="white"/>
+    <circle cx="600" cy="430" r="60" fill="white"/>
+    <line x1="400" y1="315" x2="600" y2="200" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <line x1="600" y1="200" x2="800" y2="315" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <line x1="800" y1="315" x2="600" y2="430" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <line x1="600" y1="430" x2="400" y2="315" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Title -->
+  <text x="600" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">Open Social</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="rgba(255, 255, 255, 0.9)" text-anchor="middle">Decentralized Community Platform</text>
+
+  <!-- Tagline -->
+  <text x="600" y="390" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="rgba(255, 255, 255, 0.7)" text-anchor="middle">Connecting users across the open social web</text>
+</svg>

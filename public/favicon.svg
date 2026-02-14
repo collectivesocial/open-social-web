@@ -1,0 +1,14 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="16" fill="#3b82f6"/>
+
+  <!-- Three connected nodes representing social connectivity -->
+  <circle cx="16" cy="10" r="3" fill="white"/>
+  <circle cx="10" cy="20" r="3" fill="white"/>
+  <circle cx="22" cy="20" r="3" fill="white"/>
+
+  <!-- Connection lines -->
+  <line x1="16" y1="13" x2="12" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="16" y1="13" x2="20" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="13" y1="20" x2="19" y2="20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>

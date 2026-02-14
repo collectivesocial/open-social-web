@@ -183,38 +183,13 @@ function HomePage() {
       const response = await fetch(`${API_URL}/users/me/memberships`, {
         credentials: 'include',
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
-        // For each membership, check if user is the only admin
-        const membershipsWithAdminInfo = await Promise.all(
-          data.memberships.map(async (membership: Membership) => {
-            try {
-              const communityResponse = await fetch(
-                `/communities/${encodeURIComponent(membership.community.did)}`,
-                { credentials: 'include' }
-              );
-              
-              if (communityResponse.ok) {
-                const communityData = await communityResponse.json();
-                const admins = communityData.community?.admins || [];
-                const isAdmin = communityData.is_admin;
-                const isOnlyAdmin = isAdmin && admins.length === 1;
-                
-                return {
-                  ...membership,
-                  isOnlyAdmin,
-                };
-              }
-            } catch (err) {
-              console.error('Failed to check admin status:', err);
-            }
-            return membership;
-          })
-        );
-        
-        setMemberships(membershipsWithAdminInfo);
+
+        // Set memberships immediately without admin checks
+        // Admin status (isOnlyAdmin) will be checked on-demand when needed
+        setMemberships(data.memberships);
       }
     } catch (error) {
       console.error('Failed to fetch memberships:', error);

@@ -37,14 +37,44 @@ interface CommunityCardProps {
 }
 
 export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
-  const { community, status, isOnlyAdmin } = membership;
+  const { community, status, isOnlyAdmin: initialIsOnlyAdmin } = membership;
   const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [isOnlyAdmin, setIsOnlyAdmin] = useState<boolean | undefined>(initialIsOnlyAdmin);
+  const [adminCheckLoading, setAdminCheckLoading] = useState(false);
 
   const handleClick = () => {
     navigate(`/communities/${encodeURIComponent(community.did)}`);
+  };
+
+  // Fetch admin status on-demand when user interacts with the card
+  const checkAdminStatus = async () => {
+    // Only check if we haven't already checked
+    if (isOnlyAdmin !== undefined || adminCheckLoading) return;
+
+    setAdminCheckLoading(true);
+    try {
+      const response = await fetch(
+        `/communities/${encodeURIComponent(community.did)}`,
+        { credentials: 'include' }
+      );
+
+      if (response.ok) {
+        const communityData = await response.json();
+        const admins = communityData.community?.admins || [];
+        const isAdmin = communityData.is_admin;
+        const isOnlyAdminStatus = isAdmin && admins.length === 1;
+        setIsOnlyAdmin(isOnlyAdminStatus);
+      }
+    } catch (err) {
+      console.error('Failed to check admin status:', err);
+      // Set to false on error so we don't keep trying
+      setIsOnlyAdmin(false);
+    } finally {
+      setAdminCheckLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -85,6 +115,8 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
       p={5}
       cursor="pointer"
       onClick={handleClick}
+      onMouseEnter={checkAdminStatus}
+      onFocus={checkAdminStatus}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {

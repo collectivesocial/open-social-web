@@ -344,16 +344,9 @@ export function AppsPage() {
     if (!confirm('Rotate API key? The old key will stop working immediately.')) return;
 
     try {
-      const response = await fetch(`/api/v1/apps/${appId}/rotate-key`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRotateResult({ appId, api_key: data.api_key });
-        fetchApps();
-      }
+      const data = await api.post<{ api_key: string }>(`/api/v1/apps/${appId}/rotate-key`);
+      setRotateResult({ appId, api_key: data.api_key });
+      fetchApps();
     } catch (error) {
       console.error('Failed to rotate key:', error);
     }
@@ -363,14 +356,8 @@ export function AppsPage() {
     if (!confirm('Deactivate this app? Its API key will stop working.')) return;
 
     try {
-      const response = await fetch(`/api/v1/apps/${appId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        fetchApps();
-      }
+      await api.del(`/api/v1/apps/${appId}`);
+      fetchApps();
     } catch (error) {
       console.error('Failed to deactivate app:', error);
     }

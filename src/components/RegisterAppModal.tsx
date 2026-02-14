@@ -17,9 +17,9 @@ import {
   Code,
   Flex,
   HStack,
-  Badge,
 } from '@chakra-ui/react';
 import { useState } from 'react';
+import { api } from '../utils/api';
 
 interface OpenChangeDetails {
   open: boolean;
@@ -115,19 +115,10 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
         body.defaultPermissions = permissions;
       }
 
-      const response = await fetch('/api/v1/apps/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(body),
-      });
+      const data = await api.post<{
+        app: { app_id: string; name: string; domain: string; api_key: string };
+      }>('/api/v1/apps/register', body);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to register app');
-      }
-
-      const data = await response.json();
       setResult(data);
       onSuccess();
     } catch (err) {

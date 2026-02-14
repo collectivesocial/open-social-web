@@ -2,6 +2,18 @@ import React, { Component } from 'react';
 import type { ReactNode } from 'react';
 import { Box, VStack, Heading, Text, Button, Flex } from '@chakra-ui/react';
 
+/**
+ * ErrorBoundary component catches React rendering errors and displays a fallback UI.
+ *
+ * Testing instructions:
+ * 1. Temporarily add this code to any component:
+ *    if (true) { throw new Error('Test error'); }
+ * 2. Navigate to that component in the browser
+ * 3. Verify the error boundary displays the fallback UI
+ * 4. Test the "Try again" and "Go home" buttons
+ * 5. Remove the test error code
+ */
+
 interface ErrorBoundaryProps {
   children: ReactNode;
 }

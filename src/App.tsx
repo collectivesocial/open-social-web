@@ -7,6 +7,7 @@ import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
 import { csrfHeaders } from './utils/csrf';
 import { sanitizeRedirectUrl } from './utils/redirect';
+import { toaster } from './components/ui/toaster';
 import { CommunityPage } from './pages/CommunityPage';
 import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
@@ -71,6 +72,7 @@ function App() {
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Auth check is a background operation, no need to show toast
     } finally {
       setLoading(false);
     }
@@ -86,6 +88,10 @@ function App() {
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);
+      toaster.error({
+        title: 'Logout failed',
+        description: error instanceof Error ? error.message : 'Could not log out',
+      });
     }
   };
 
@@ -169,6 +175,10 @@ function HomePage() {
         }
       } catch (err) {
         console.error('Search failed:', err);
+        toaster.error({
+          title: 'Search failed',
+          description: err instanceof Error ? err.message : 'Could not search communities',
+        });
       } finally {
         setSearchLoading(false);
       }
@@ -209,6 +219,7 @@ function HomePage() {
               }
             } catch (err) {
               console.error('Failed to check admin status:', err);
+              // Background operation to check admin status, no need for toast
             }
             return membership;
           })
@@ -218,6 +229,10 @@ function HomePage() {
       }
     } catch (error) {
       console.error('Failed to fetch memberships:', error);
+      toaster.error({
+        title: 'Failed to load memberships',
+        description: error instanceof Error ? error.message : 'Could not fetch your communities',
+      });
     } finally {
       setMembershipsLoading(false);
     }

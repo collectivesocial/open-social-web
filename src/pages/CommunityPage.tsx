@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { csrfHeaders } from '../utils/csrf';
 import { api } from '../utils/api';
 import { sanitizeRedirectUrl } from '../utils/redirect';
+import { toaster } from '../components/ui/toaster';
 import {
   Box,
   Container,
@@ -125,6 +126,10 @@ export function CommunityPage() {
       }
     } catch (err) {
       console.error('Failed to fetch members:', err);
+      toaster.error({
+        title: 'Failed to load members',
+        description: err instanceof Error ? err.message : 'Could not fetch community members',
+      });
     } finally {
       setMembersLoading(false);
     }
@@ -232,8 +237,18 @@ export function CommunityPage() {
     try {
       await api.post(`/communities/${encodeURIComponent(did)}/members/${encodeURIComponent(memberDid)}/admin`);
       await Promise.all([fetchCommunityDetails(), fetchMembers(memberSearch)]);
+      toaster.success({
+        title: 'Admin promoted',
+        description: 'Member has been promoted to admin',
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Failed to promote admin:', err);
+      const errorMessage = err.message || 'Failed to promote member to admin';
+      setError(errorMessage);
+      toaster.error({
+        title: 'Failed to promote admin',
+        description: errorMessage,
+      });
     } finally {
       setActionLoading(false);
       setOpenMenuDid(null);
@@ -246,8 +261,18 @@ export function CommunityPage() {
     try {
       await api.del(`/communities/${encodeURIComponent(did)}/members/${encodeURIComponent(memberDid)}/admin`);
       await Promise.all([fetchCommunityDetails(), fetchMembers(memberSearch)]);
+      toaster.success({
+        title: 'Admin demoted',
+        description: 'Admin privileges have been removed',
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Failed to demote admin:', err);
+      const errorMessage = err.message || 'Failed to remove admin privileges';
+      setError(errorMessage);
+      toaster.error({
+        title: 'Failed to demote admin',
+        description: errorMessage,
+      });
     } finally {
       setActionLoading(false);
       setOpenMenuDid(null);
@@ -260,8 +285,18 @@ export function CommunityPage() {
     try {
       await api.del(`/communities/${encodeURIComponent(did)}/members/${encodeURIComponent(memberDid)}`);
       await fetchMembers(memberSearch);
+      toaster.success({
+        title: 'Member removed',
+        description: 'Member has been removed from the community',
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Failed to kick member:', err);
+      const errorMessage = err.message || 'Failed to remove member from community';
+      setError(errorMessage);
+      toaster.error({
+        title: 'Failed to remove member',
+        description: errorMessage,
+      });
     } finally {
       setActionLoading(false);
       setOpenMenuDid(null);
@@ -274,8 +309,18 @@ export function CommunityPage() {
     try {
       await api.post(`/communities/${encodeURIComponent(did)}/transfer-admin`, { newOwnerDid: memberDid });
       await Promise.all([fetchCommunityDetails(), fetchMembers(memberSearch)]);
+      toaster.success({
+        title: 'Primary admin transferred',
+        description: 'Primary admin rights have been transferred',
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Failed to transfer admin:', err);
+      const errorMessage = err.message || 'Failed to transfer primary admin';
+      setError(errorMessage);
+      toaster.error({
+        title: 'Failed to transfer admin',
+        description: errorMessage,
+      });
     } finally {
       setActionLoading(false);
       setOpenMenuDid(null);
@@ -288,8 +333,18 @@ export function CommunityPage() {
     try {
       await api.post(`/communities/${encodeURIComponent(did)}/members/${encodeURIComponent(memberDid)}/roles`, { roleName });
       await fetchMembers(memberSearch);
+      toaster.success({
+        title: 'Role assigned',
+        description: 'Role has been assigned to member',
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Failed to assign role:', err);
+      const errorMessage = err.message || 'Failed to assign role';
+      setError(errorMessage);
+      toaster.error({
+        title: 'Failed to assign role',
+        description: errorMessage,
+      });
     } finally {
       setActionLoading(false);
       setOpenMenuDid(null);
@@ -302,8 +357,18 @@ export function CommunityPage() {
     try {
       await api.del(`/communities/${encodeURIComponent(did)}/members/${encodeURIComponent(memberDid)}/roles/${encodeURIComponent(roleName)}`);
       await fetchMembers(memberSearch);
+      toaster.success({
+        title: 'Role revoked',
+        description: 'Role has been removed from member',
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('Failed to revoke role:', err);
+      const errorMessage = err.message || 'Failed to revoke role';
+      setError(errorMessage);
+      toaster.error({
+        title: 'Failed to revoke role',
+        description: errorMessage,
+      });
     } finally {
       setActionLoading(false);
       setOpenMenuDid(null);

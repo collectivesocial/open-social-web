@@ -18,6 +18,7 @@ import {
 import { RegisterAppModal } from '../components/RegisterAppModal';
 import { EmptyState } from '../components/EmptyState';
 import { api } from '../utils/api';
+import { toaster } from '../components/ui/toaster';
 import type { AppInfo, AppDefaultPermission } from '../types';
 
 const PERMISSION_LEVELS = ['member', 'admin'] as const;
@@ -121,8 +122,16 @@ function AppDefaultPermissionsSection({ app }: { app: AppInfo }) {
         [field]: value,
       });
       await fetchPermissions();
+      toaster.success({
+        title: 'Permission updated',
+        description: 'Default permission has been updated',
+      });
     } catch (err: any) {
       console.error('Failed to update permission:', err);
+      toaster.error({
+        title: 'Failed to update permission',
+        description: err.message || 'Could not update permission',
+      });
     }
   };
 
@@ -130,8 +139,16 @@ function AppDefaultPermissionsSection({ app }: { app: AppInfo }) {
     try {
       await api.del(`/api/v1/apps/${app.app_id}/default-permissions`, { collection });
       await fetchPermissions();
+      toaster.success({
+        title: 'Permission removed',
+        description: 'Default permission has been removed',
+      });
     } catch (err: any) {
       console.error('Failed to remove permission:', err);
+      toaster.error({
+        title: 'Failed to remove permission',
+        description: err.message || 'Could not remove permission',
+      });
     }
   };
 
@@ -331,6 +348,10 @@ export function AppsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch apps:', error);
+      toaster.error({
+        title: 'Failed to load apps',
+        description: error instanceof Error ? error.message : 'Could not fetch apps',
+      });
     } finally {
       setLoading(false);
     }
@@ -347,8 +368,16 @@ export function AppsPage() {
       const data = await api.post<{ api_key: string }>(`/api/v1/apps/${appId}/rotate-key`);
       setRotateResult({ appId, api_key: data.api_key });
       fetchApps();
+      toaster.success({
+        title: 'API key rotated',
+        description: 'New API key has been generated',
+      });
     } catch (error) {
       console.error('Failed to rotate key:', error);
+      toaster.error({
+        title: 'Failed to rotate key',
+        description: error instanceof Error ? error.message : 'Could not rotate API key',
+      });
     }
   };
 
@@ -358,8 +387,16 @@ export function AppsPage() {
     try {
       await api.del(`/api/v1/apps/${appId}`);
       fetchApps();
+      toaster.success({
+        title: 'App deactivated',
+        description: 'App has been deactivated',
+      });
     } catch (error) {
       console.error('Failed to deactivate app:', error);
+      toaster.error({
+        title: 'Failed to deactivate app',
+        description: error instanceof Error ? error.message : 'Could not deactivate app',
+      });
     }
   };
 

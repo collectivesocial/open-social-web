@@ -18,6 +18,7 @@ import {
   Textarea,
 } from '@chakra-ui/react';
 import { api } from '../utils/api';
+import { toaster } from '../components/ui/toaster';
 import type {
   CommunitySettings,
   AppVisibility,
@@ -84,8 +85,16 @@ function SettingsTab({ did }: { did: string }) {
         appVisibilityDefault: settings.appVisibilityDefault,
         blockedAppIds: settings.blockedAppIds,
       });
+      toaster.success({
+        title: 'Settings saved',
+        description: 'Community settings have been updated',
+      });
     } catch (err: any) {
       console.error('Failed to save settings:', err);
+      toaster.error({
+        title: 'Failed to save settings',
+        description: err.message || 'Could not update community settings',
+      });
     } finally {
       setSaving(false);
     }
@@ -187,8 +196,16 @@ function AppsTab({ did }: { did: string }) {
         { status },
       );
       await fetchApps();
+      toaster.success({
+        title: 'App status updated',
+        description: `App has been ${status}`,
+      });
     } catch (err: any) {
       console.error('Failed to update app status:', err);
+      toaster.error({
+        title: 'Failed to update app status',
+        description: err.message || 'Could not update app status',
+      });
     }
   };
 
@@ -304,8 +321,16 @@ function AppCollectionPermissions({ did, appId }: { did: string; appId: string }
         { collection, [field]: value },
       );
       await fetchPermissions();
+      toaster.success({
+        title: 'Permission updated',
+        description: 'Collection permission has been updated',
+      });
     } catch (err: any) {
       console.error('Failed to update permission:', err);
+      toaster.error({
+        title: 'Failed to update permission',
+        description: err.message || 'Could not update permission',
+      });
     }
   };
 
@@ -316,8 +341,16 @@ function AppCollectionPermissions({ did, appId }: { did: string; appId: string }
         { collection },
       );
       await fetchPermissions();
+      toaster.success({
+        title: 'Permission removed',
+        description: 'Collection permission has been removed',
+      });
     } catch (err: any) {
       console.error('Failed to delete permission:', err);
+      toaster.error({
+        title: 'Failed to remove permission',
+        description: err.message || 'Could not remove permission',
+      });
     }
   };
 
@@ -439,8 +472,16 @@ function RolesTab({ did }: { did: string }) {
     try {
       await api.del(`/communities/${encodeURIComponent(did)}/roles/${roleName}`);
       await fetchRoles();
+      toaster.success({
+        title: 'Role deleted',
+        description: 'Role has been deleted',
+      });
     } catch (err: any) {
       console.error('Failed to delete role:', err);
+      toaster.error({
+        title: 'Failed to delete role',
+        description: err.message || 'Could not delete role',
+      });
     }
   };
 
@@ -451,8 +492,16 @@ function RolesTab({ did }: { did: string }) {
         { visible: !role.visible },
       );
       await fetchRoles();
+      toaster.success({
+        title: 'Role visibility updated',
+        description: `Role is now ${!role.visible ? 'visible' : 'hidden'}`,
+      });
     } catch (err: any) {
       console.error('Failed to update role:', err);
+      toaster.error({
+        title: 'Failed to update role',
+        description: err.message || 'Could not update role visibility',
+      });
     }
   };
 
@@ -463,8 +512,16 @@ function RolesTab({ did }: { did: string }) {
         { canViewAuditLog: !role.canViewAuditLog },
       );
       await fetchRoles();
+      toaster.success({
+        title: 'Audit log access updated',
+        description: `Audit log access ${!role.canViewAuditLog ? 'granted' : 'revoked'}`,
+      });
     } catch (err: any) {
       console.error('Failed to update role:', err);
+      toaster.error({
+        title: 'Failed to update role',
+        description: err.message || 'Could not update audit log access',
+      });
     }
   };
 

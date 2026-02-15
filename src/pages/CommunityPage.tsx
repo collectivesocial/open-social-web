@@ -820,17 +820,17 @@ export function CommunityPage() {
                       _hover={{ borderColor: 'accent.default', bg: 'bg.card' }}
                       transition="all 0.15s ease"
                     >
-                      <Flex
-                        as="a"
+                      <a
                         href={bskyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        style={{ textDecoration: 'none', flex: 1 }}
+                      >
+                      <Flex
                         align="center"
                         gap={3}
                         p={3}
                         cursor="pointer"
-                        textDecoration="none"
-                        flex={1}
                       >
                         <Avatar
                           name={member.displayName || member.handle || member.did}
@@ -887,6 +887,7 @@ export function CommunityPage() {
                           </Box>
                         )}
                       </Flex>
+                      </a>
 
                       {/* Dropdown menu */}
                       {openMenuDid === member.did && details.isAdmin && (
@@ -916,8 +917,10 @@ export function CommunityPage() {
                               py={2}
                               fontSize="sm"
                               _hover={{ bg: 'bg.subtle' }}
-                              onClick={() => promoteToAdmin(member.did)}
-                              disabled={actionLoading}
+                              onClick={() => !actionLoading && promoteToAdmin(member.did)}
+                              aria-disabled={actionLoading}
+                              opacity={actionLoading ? 0.5 : 1}
+                              pointerEvents={actionLoading ? 'none' : 'auto'}
                             >
                               ⬆ Promote to Admin
                             </Box>
@@ -931,8 +934,10 @@ export function CommunityPage() {
                               py={2}
                               fontSize="sm"
                               _hover={{ bg: 'bg.subtle' }}
-                              onClick={() => demoteAdmin(member.did)}
-                              disabled={actionLoading}
+                              onClick={() => !actionLoading && demoteAdmin(member.did)}
+                              aria-disabled={actionLoading}
+                              opacity={actionLoading ? 0.5 : 1}
+                              pointerEvents={actionLoading ? 'none' : 'auto'}
                             >
                               ⬇ Demote from Admin
                             </Box>
@@ -946,8 +951,10 @@ export function CommunityPage() {
                               py={2}
                               fontSize="sm"
                               _hover={{ bg: 'bg.subtle' }}
-                              onClick={() => transferAdmin(member.did)}
-                              disabled={actionLoading}
+                              onClick={() => !actionLoading && transferAdmin(member.did)}
+                              aria-disabled={actionLoading}
+                              opacity={actionLoading ? 0.5 : 1}
+                              pointerEvents={actionLoading ? 'none' : 'auto'}
                             >
                               🔄 Transfer Primary Admin
                             </Box>
@@ -970,8 +977,10 @@ export function CommunityPage() {
                                   py={2}
                                   fontSize="sm"
                                   _hover={{ bg: 'bg.subtle' }}
-                                  onClick={() => assignRole(member.did, role.name)}
-                                  disabled={actionLoading}
+                                  onClick={() => !actionLoading && assignRole(member.did, role.name)}
+                                  aria-disabled={actionLoading}
+                                  opacity={actionLoading ? 0.5 : 1}
+                                  pointerEvents={actionLoading ? 'none' : 'auto'}
                                 >
                                   + {role.displayName}
                                 </Box>
@@ -997,8 +1006,10 @@ export function CommunityPage() {
                                   fontSize="sm"
                                   color="fg.error"
                                   _hover={{ bg: 'bg.subtle' }}
-                                  onClick={() => revokeRole(member.did, role.name)}
-                                  disabled={actionLoading}
+                                  onClick={() => !actionLoading && revokeRole(member.did, role.name)}
+                                  aria-disabled={actionLoading}
+                                  opacity={actionLoading ? 0.5 : 1}
+                                  pointerEvents={actionLoading ? 'none' : 'auto'}
                                 >
                                   − {role.displayName}
                                 </Box>
@@ -1019,8 +1030,10 @@ export function CommunityPage() {
                                 fontSize="sm"
                                 color="fg.error"
                                 _hover={{ bg: 'bg.subtle' }}
-                                onClick={() => kickMember(member.did)}
-                                disabled={actionLoading}
+                                onClick={() => !actionLoading && kickMember(member.did)}
+                                aria-disabled={actionLoading}
+                                opacity={actionLoading ? 0.5 : 1}
+                                pointerEvents={actionLoading ? 'none' : 'auto'}
                               >
                                 🚫 Kick from Community
                               </Box>

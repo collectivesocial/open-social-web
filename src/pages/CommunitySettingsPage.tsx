@@ -526,9 +526,9 @@ function RolesTab({ did }: { did: string }) {
                 onChange={(e) => setNewVisible(e.target.checked)}
                 id="visible-checkbox"
               />
-              <Text as="label" htmlFor="visible-checkbox" fontSize="sm">
+              <label htmlFor="visible-checkbox" style={{ fontSize: 'var(--chakra-fontSizes-sm)' }}>
                 Visible to all members
-              </Text>
+              </label>
             </Flex>
             <Flex align="center" gap={2}>
               <input
@@ -537,9 +537,9 @@ function RolesTab({ did }: { did: string }) {
                 onChange={(e) => setNewCanViewAuditLog(e.target.checked)}
                 id="audit-log-checkbox"
               />
-              <Text as="label" htmlFor="audit-log-checkbox" fontSize="sm">
+              <label htmlFor="audit-log-checkbox" style={{ fontSize: 'var(--chakra-fontSizes-sm)' }}>
                 Can view audit log
-              </Text>
+              </label>
             </Flex>
             {createError && <Text fontSize="xs" color="fg.error">{createError}</Text>}
             <Button onClick={createRole} disabled={saving} colorPalette="orange" size="sm" alignSelf="flex-start">

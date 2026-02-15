@@ -1,8 +1,10 @@
 import { csrfHeaders } from './csrf';
 
+export const API_BASE = import.meta.env.VITE_API_URL || '';
+
 /**
  * Lightweight API helper that wraps fetch with common conventions:
- *  - relative URL (Vite proxy forwards to backend)
+ *  - prefixes VITE_API_URL (empty in dev — Vite proxy forwards to backend)
  *  - credentials: 'include'
  *  - CSRF header on mutating requests
  *  - automatic JSON parsing
@@ -27,7 +29,7 @@ async function request<T = any>(
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',
     headers,

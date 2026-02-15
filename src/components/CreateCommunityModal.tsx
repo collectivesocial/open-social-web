@@ -20,6 +20,7 @@ import {
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { csrfHeaders } from '../utils/csrf';
+import { API_BASE } from '../utils/api';
 
 interface OpenChangeDetails {
   open: boolean;
@@ -44,7 +45,7 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
     setLoading(true);
 
     try {
-      const response = await fetch('/users/me/communities', {
+      const response = await fetch(`${API_BASE}/users/me/communities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         credentials: 'include',

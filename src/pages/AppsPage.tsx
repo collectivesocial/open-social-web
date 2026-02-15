@@ -17,7 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { RegisterAppModal } from '../components/RegisterAppModal';
 import { EmptyState } from '../components/EmptyState';
-import { api } from '../utils/api';
+import { api, API_BASE } from '../utils/api';
 import type { AppInfo, AppDefaultPermission } from '../types';
 
 const PERMISSION_LEVELS = ['member', 'admin'] as const;
@@ -318,7 +318,7 @@ export function AppsPage() {
   const fetchApps = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/apps', {
+      const response = await fetch(`${API_BASE}/api/v1/apps`, {
         credentials: 'include',
       });
       if (response.status === 401) {

@@ -12,8 +12,9 @@ import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
 import './App.css';
 
-// Use relative paths - Vite proxy will forward to backend
-const API_URL = '';
+// In dev, Vite proxy forwards relative paths to the backend.
+// In production, VITE_API_URL must point to the deployed API origin.
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface User {
   did: string;
@@ -192,7 +193,7 @@ function HomePage() {
           data.memberships.map(async (membership: Membership) => {
             try {
               const communityResponse = await fetch(
-                `/communities/${encodeURIComponent(membership.community.did)}`,
+                `${API_URL}/communities/${encodeURIComponent(membership.community.did)}`,
                 { credentials: 'include' }
               );
               

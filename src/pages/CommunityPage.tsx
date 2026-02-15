@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { csrfHeaders } from '../utils/csrf';
-import { api } from '../utils/api';
+import { api, API_BASE } from '../utils/api';
 import { sanitizeRedirectUrl } from '../utils/redirect';
 import {
   Box,
@@ -91,8 +91,7 @@ export function CommunityPage() {
 
     const fetchCommunityDetails = useCallback(async () => {
     try {
-      const response = await fetch(`/communities/${encodeURIComponent(did!)}`, {
-        credentials: 'include',
+      const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did!)}`, {
       });
 
       if (!response.ok) {
@@ -115,7 +114,7 @@ export function CommunityPage() {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       const response = await fetch(
-        `/communities/${encodeURIComponent(did)}/members?${params.toString()}`,
+        `${API_BASE}/communities/${encodeURIComponent(did)}/members?${params.toString()}`,
         { credentials: 'include' }
       );
       if (response.ok) {
@@ -143,7 +142,7 @@ export function CommunityPage() {
     setJoining(true);
     setJoinStatus(null);
     try {
-      const response = await fetch(`/communities/${encodeURIComponent(did)}/join`, {
+      const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did)}/join`, {
         method: 'POST',
         credentials: 'include',
         headers: { ...csrfHeaders() },
@@ -333,7 +332,7 @@ export function CommunityPage() {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const response = await fetch(`/communities/${encodeURIComponent(did!)}/avatar`, {
+      const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did!)}/avatar`, {
         method: 'POST',
         credentials: 'include',
         headers: { ...csrfHeaders() },
@@ -378,7 +377,7 @@ export function CommunityPage() {
     setError('');
 
     try {
-      const response = await fetch(`/communities/${encodeURIComponent(did!)}/profile`, {
+      const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did!)}/profile`, {
         method: 'PUT',
         credentials: 'include',
         headers: {

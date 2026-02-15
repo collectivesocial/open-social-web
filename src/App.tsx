@@ -6,6 +6,7 @@ import { CommunityCard, CommunityCardSkeleton } from './components/CommunityCard
 import { EmptyState } from './components/EmptyState';
 import { CreateCommunityModal } from './components/CreateCommunityModal';
 import { csrfHeaders } from './utils/csrf';
+import { sanitizeRedirectUrl } from './utils/redirect';
 import { CommunityPage } from './pages/CommunityPage';
 import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
@@ -52,7 +53,7 @@ function App() {
       const response = await fetch(`${API_URL}/users/me`, {
         credentials: 'include',
       });
-      
+
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
@@ -61,7 +62,11 @@ function App() {
         const pendingRedirect = sessionStorage.getItem('pendingRedirect');
         if (pendingRedirect) {
           sessionStorage.removeItem('pendingRedirect');
-          navigate(pendingRedirect);
+          // Sanitize the redirect URL to prevent open redirects
+          const safeRedirect = sanitizeRedirectUrl(pendingRedirect);
+          if (safeRedirect) {
+            navigate(safeRedirect);
+          }
         }
       }
     } catch (error) {

@@ -13,12 +13,12 @@ import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <Provider>
+    <Provider>
+      <ErrorBoundary>
         <BrowserRouter>
           <App />
         </BrowserRouter>
-      </Provider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </Provider>
   </StrictMode>,
 )

@@ -228,13 +228,14 @@ function AppCard({
   onRotateKey: (appId: string) => void;
   onDeactivate: (appId: string) => void;
 }) {
-  const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const copyKey = async () => {
-    await navigator.clipboard.writeText(app.api_key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (app.api_key) {
+      await navigator.clipboard.writeText(app.api_key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
@@ -258,22 +259,21 @@ function AppCard({
       </Box>
 
       <Box mb={3}>
-        <Flex justify="space-between" align="center" mb={1}>
-          <Text fontSize="xs" color="fg.subtle">API Key</Text>
-          <Flex gap={1}>
-            <Button size="xs" variant="ghost" onClick={() => setShowKey(!showKey)}>
-              {showKey ? 'Hide' : 'Show'}
+        <Text fontSize="xs" color="fg.subtle" mb={1}>API Key</Text>
+        {app.api_key ? (
+          <>
+            <Code fontSize="xs" p={1} borderRadius="sm" display="block" wordBreak="break-all">
+              {app.api_key}
+            </Code>
+            <Button size="xs" variant="ghost" onClick={copyKey} mt={1}>
+              {copied ? '✓ Copied' : 'Copy'}
             </Button>
-            {showKey && (
-              <Button size="xs" variant="ghost" onClick={copyKey}>
-                {copied ? '✓' : 'Copy'}
-              </Button>
-            )}
-          </Flex>
-        </Flex>
-        <Code fontSize="xs" p={1} borderRadius="sm" display="block" wordBreak="break-all">
-          {showKey ? app.api_key : '••••••••••••••••••••••••'}
-        </Code>
+          </>
+        ) : (
+          <Text fontSize="xs" color="fg.subtle">
+            Key was shown at creation. Use "Rotate Key" to generate a new one.
+          </Text>
+        )}
       </Box>
 
       <Text fontSize="xs" color="fg.subtle" mb={3}>

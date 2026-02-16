@@ -41,7 +41,7 @@ export interface AppInfo {
   app_id: string;
   name: string;
   domain: string;
-  api_key: string;
+  api_key?: string;
   status: string;
   created_at: string;
   updated_at: string;

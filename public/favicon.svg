@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- "Open" icon: a circle with a gap/opening at top-right, symbolizing openness -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <!-- Open ring: a thick arc with a welcoming gap -->
+  <path d="M64 12 a52 52 0 1 0 36.77 15.23" fill="none" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/>
+  <!-- Arrow pointing outward from the gap, suggesting openness/invitation -->
+  <path d="M90 18 l14-10 l-2 14" fill="none" stroke="url(#grad)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

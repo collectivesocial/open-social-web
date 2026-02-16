@@ -120,8 +120,9 @@ export function CommunityPage() {
       );
       if (response.ok) {
         const data: MembersResponse = await response.json();
-        setMembers(data.members);
-        setMembersTotal(data.total);
+        const validMembers = data.members.filter((m) => m.did);
+        setMembers(validMembers);
+        setMembersTotal(validMembers.length);
       }
     } catch (err) {
       console.error('Failed to fetch members:', err);
@@ -801,7 +802,7 @@ export function CommunityPage() {
               </Text>
             ) : (
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
-                {members.filter((m) => m.did).map((member) => {
+                {members.map((member) => {
                   const bskyUrl = member.handle
                     ? `https://bsky.app/profile/${member.handle}`
                     : `https://bsky.app/profile/${member.did}`;

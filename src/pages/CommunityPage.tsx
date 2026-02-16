@@ -801,7 +801,7 @@ export function CommunityPage() {
               </Text>
             ) : (
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
-                {members.map((member) => {
+                {members.filter((m) => m.did).map((member) => {
                   const bskyUrl = member.handle
                     ? `https://bsky.app/profile/${member.handle}`
                     : `https://bsky.app/profile/${member.did}`;

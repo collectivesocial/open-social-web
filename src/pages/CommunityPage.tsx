@@ -38,6 +38,7 @@ interface CommunityDetails {
   isPrimaryAdmin: boolean;
   isAuthenticated: boolean;
   userRole?: string;
+  credentialError?: boolean;
 }
 
 interface Member {
@@ -79,6 +80,13 @@ export function CommunityPage() {
   const [membersTotal, setMembersTotal] = useState(0);
   const [membersLoading, setMembersLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
+
+  // App password update state (for credential errors)
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newAppPassword, setNewAppPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Member action dropdown state
   const [openMenuDid, setOpenMenuDid] = useState<string | null>(null);
@@ -404,6 +412,46 @@ export function CommunityPage() {
       setError(err instanceof Error ? err.message : 'Failed to update community');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdateAppPassword = async () => {
+    if (!newAppPassword.trim()) {
+      setPasswordError('Please enter the new app password');
+      return;
+    }
+
+    setPasswordSaving(true);
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    try {
+      const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did!)}/app-password`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...csrfHeaders(),
+        },
+        body: JSON.stringify({ appPassword: newAppPassword.trim() }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update app password');
+      }
+
+      setPasswordSuccess(true);
+      setNewAppPassword('');
+      setShowPasswordForm(false);
+
+      // Refresh community details to clear credential error
+      await fetchCommunityDetails();
+      await fetchMembers();
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to update app password');
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -773,6 +821,109 @@ export function CommunityPage() {
           {error && (
             <Box bg="red.50" borderRadius="md" p={4}>
               <Text color="fg.error">{error}</Text>
+            </Box>
+          )}
+
+          {/* Credential error banner for admins */}
+          {details.credentialError && isAdmin && (
+            <Box
+              bg="orange.50"
+              borderRadius="xl"
+              p={6}
+              shadow="sm"
+              borderWidth="1px"
+              borderColor="orange.200"
+            >
+              <VStack gap={4} align="stretch">
+                <HStack gap={2}>
+                  <Text fontSize="lg" fontWeight="bold">⚠️</Text>
+                  <Heading size="sm" fontFamily="heading" color="orange.700">
+                    Community App Password Needs Updating
+                  </Heading>
+                </HStack>
+                <Text color="orange.700" fontSize="sm">
+                  The app password for this community account has been revoked or changed.
+                  Some features (like managing members and records) won't work until it's updated.
+                </Text>
+                <Text color="orange.700" fontSize="sm">
+                  To fix this: go to{' '}
+                  <a
+                    href="https://bsky.app/settings/app-passwords"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'underline', fontWeight: 600 }}
+                  >
+                    Bluesky App Passwords settings
+                  </a>{' '}
+                  while logged in as the community account, create a new app password, then paste it below.
+                </Text>
+
+                {!showPasswordForm ? (
+                  <Button
+                    colorPalette="orange"
+                    size="sm"
+                    onClick={() => {
+                      setShowPasswordForm(true);
+                      setPasswordError('');
+                      setPasswordSuccess(false);
+                    }}
+                    alignSelf="flex-start"
+                  >
+                    Update App Password
+                  </Button>
+                ) : (
+                  <VStack gap={3} align="stretch">
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" mb={1} color="orange.700">
+                        New App Password
+                      </Text>
+                      <Input
+                        type="password"
+                        value={newAppPassword}
+                        onChange={(e) => setNewAppPassword(e.target.value)}
+                        placeholder="xxxx-xxxx-xxxx-xxxx"
+                        bg="white"
+                        borderColor="orange.300"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleUpdateAppPassword();
+                        }}
+                      />
+                    </Box>
+                    {passwordError && (
+                      <Text color="red.600" fontSize="sm">{passwordError}</Text>
+                    )}
+                    <HStack gap={2}>
+                      <Button
+                        colorPalette="orange"
+                        size="sm"
+                        onClick={handleUpdateAppPassword}
+                        disabled={passwordSaving}
+                      >
+                        {passwordSaving ? 'Verifying...' : 'Save New Password'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        bg="transparent"
+                        onClick={() => {
+                          setShowPasswordForm(false);
+                          setNewAppPassword('');
+                          setPasswordError('');
+                        }}
+                        disabled={passwordSaving}
+                      >
+                        Cancel
+                      </Button>
+                    </HStack>
+                  </VStack>
+                )}
+
+                {passwordSuccess && (
+                  <Text color="green.600" fontSize="sm" fontWeight="medium">
+                    ✓ App password updated successfully! The community should work normally now.
+                  </Text>
+                )}
+              </VStack>
             </Box>
           )}
 

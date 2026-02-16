@@ -92,6 +92,7 @@ export function CommunityPage() {
     const fetchCommunityDetails = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did!)}`, {
+        credentials: 'include',
       });
 
       if (!response.ok) {

@@ -45,6 +45,10 @@ export interface AppInfo {
   status: string;
   created_at: string;
   updated_at: string;
+  /** Optional AT Protocol DID linked to this app */
+  did?: string | null;
+  /** Resolved profile pic URL from the linked DID */
+  avatarUrl?: string | null;
 }
 
 export interface Member {
@@ -70,6 +74,8 @@ export interface AppVisibility {
   appId: string;
   appName: string | null;
   appDomain: string | null;
+  did: string | null;
+  avatarUrl: string | null;
   status: 'enabled' | 'disabled' | 'pending';
   reviewedBy: string | null;
   createdAt: string;

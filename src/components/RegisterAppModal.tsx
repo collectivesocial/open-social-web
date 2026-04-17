@@ -43,6 +43,7 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [domain, setDomain] = useState('');
+  const [did, setDid] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{
@@ -111,6 +112,9 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
 
     try {
       const body: any = { name, domain };
+      if (did.trim()) {
+        body.did = did.trim();
+      }
       if (permissions.length > 0) {
         body.defaultPermissions = permissions;
       }
@@ -131,6 +135,7 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
   const resetForm = () => {
     setName('');
     setDomain('');
+    setDid('');
     setError('');
     setResult(null);
     setCopiedKey(false);
@@ -233,6 +238,20 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                 />
                 <Text fontSize="xs" color="fg.subtle" mt={1}>
                   The domain where your app will run. Lexicon collections must match this domain.
+                </Text>
+              </Box>
+
+              <Box>
+                <Text fontWeight="medium" mb={1} fontSize="sm">App Identity (optional)</Text>
+                <Input
+                  value={did}
+                  onChange={(e) => setDid(e.target.value)}
+                  placeholder="did:plc:... or @handle.bsky.social"
+                  disabled={loading}
+                />
+                <Text fontSize="xs" color="fg.subtle" mt={1}>
+                  Link an AT Protocol DID to use its profile picture as your app logo.
+                  Create a Bluesky account for your app and paste its DID here.
                 </Text>
               </Box>
 

@@ -17,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { RegisterAppModal } from '../components/RegisterAppModal';
 import { EmptyState } from '../components/EmptyState';
+import { Avatar } from '../components/ui/avatar';
 import { api, API_BASE } from '../utils/api';
 import type { AppInfo, AppDefaultPermission } from '../types';
 
@@ -223,12 +224,17 @@ function AppCard({
   app,
   onRotateKey,
   onDeactivate,
+  onRefresh,
 }: {
   app: AppInfo;
   onRotateKey: (appId: string) => void;
   onDeactivate: (appId: string) => void;
+  onRefresh: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [editingDid, setEditingDid] = useState(false);
+  const [didValue, setDidValue] = useState(app.did || '');
+  const [savingDid, setSavingDid] = useState(false);
 
   const copyKey = async () => {
     if (app.api_key) {
@@ -238,13 +244,35 @@ function AppCard({
     }
   };
 
+  const saveDid = async () => {
+    setSavingDid(true);
+    try {
+      await api.put(`/api/v1/apps/${app.app_id}`, {
+        did: didValue.trim() || null,
+      });
+      setEditingDid(false);
+      onRefresh();
+    } catch (err) {
+      console.error('Failed to update DID:', err);
+    } finally {
+      setSavingDid(false);
+    }
+  };
+
   return (
     <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
       <Flex justify="space-between" align="start" mb={3}>
-        <Box>
-          <Heading size="sm" mb={1} fontFamily="heading">{app.name}</Heading>
-          <Text fontSize="sm" color="fg.muted">{app.domain}</Text>
-        </Box>
+        <HStack gap={3}>
+          <Avatar
+            name={app.name}
+            src={app.avatarUrl || undefined}
+            size="md"
+          />
+          <Box>
+            <Heading size="sm" mb={1} fontFamily="heading">{app.name}</Heading>
+            <Text fontSize="sm" color="fg.muted">{app.domain}</Text>
+          </Box>
+        </HStack>
         <Badge
           colorPalette={app.status === 'active' ? 'green' : 'red'}
           size="sm"
@@ -279,6 +307,41 @@ function AppCard({
       <Text fontSize="xs" color="fg.subtle" mb={3}>
         Created {new Date(app.created_at).toLocaleDateString()}
       </Text>
+
+      {/* App Identity (DID) */}
+      <Box mb={3}>
+        <Text fontSize="xs" color="fg.subtle" mb={1}>App Identity</Text>
+        {editingDid ? (
+          <HStack gap={2}>
+            <Input
+              value={didValue}
+              onChange={(e) => setDidValue(e.target.value)}
+              placeholder="did:plc:... or leave empty to unlink"
+              size="sm"
+              disabled={savingDid}
+            />
+            <Button size="xs" variant="solid" colorPalette="accent" onClick={saveDid} disabled={savingDid} flexShrink={0}>
+              {savingDid ? '...' : 'Save'}
+            </Button>
+            <Button size="xs" variant="ghost" onClick={() => { setEditingDid(false); setDidValue(app.did || ''); }} disabled={savingDid} flexShrink={0}>
+              Cancel
+            </Button>
+          </HStack>
+        ) : app.did ? (
+          <Flex align="center" gap={2}>
+            <Code fontSize="xs" p={1} borderRadius="sm">{app.did}</Code>
+            {app.status === 'active' && (
+              <Button size="xs" variant="ghost" onClick={() => setEditingDid(true)}>Edit</Button>
+            )}
+          </Flex>
+        ) : (
+          app.status === 'active' && (
+            <Button size="xs" variant="outline" onClick={() => setEditingDid(true)}>
+              Link AT Proto Identity
+            </Button>
+          )
+        )}
+      </Box>
 
       {app.status === 'active' && (
         <Flex gap={2} mt={2}>
@@ -428,6 +491,7 @@ export function AppsPage() {
                 app={app}
                 onRotateKey={handleRotateKey}
                 onDeactivate={handleDeactivate}
+                onRefresh={fetchApps}
               />
             ))}
           </Grid>

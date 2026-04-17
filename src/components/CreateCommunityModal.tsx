@@ -28,10 +28,11 @@ interface OpenChangeDetails {
 
 interface CreateCommunityModalProps {
   onSuccess: () => void;
+  initialOpen?: boolean;
 }
 
-export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
-  const [open, setOpen] = useState(false);
+export function CreateCommunityModal({ onSuccess, initialOpen = false }: CreateCommunityModalProps) {
+  const [open, setOpen] = useState(initialOpen);
   const [displayName, setDisplayName] = useState('');
   const [description, setDescription] = useState('');
   const [existingDid, setExistingDid] = useState('');
@@ -68,6 +69,22 @@ export function CreateCommunityModal({ onSuccess }: CreateCommunityModalProps) {
       setOpen(false);
       resetForm();
       onSuccess();
+
+      // If there's a return_to URL (e.g., from Collective Social), redirect back
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get('return_to');
+      if (returnTo) {
+        try {
+          const url = new URL(returnTo);
+          // Only allow http/https redirects to prevent javascript: etc.
+          if (url.protocol === 'http:' || url.protocol === 'https:') {
+            window.location.href = returnTo;
+            return;
+          }
+        } catch {
+          // Invalid URL, ignore
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create community');
     } finally {

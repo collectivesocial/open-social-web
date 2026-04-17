@@ -18,6 +18,7 @@ import {
   Textarea,
 } from '@chakra-ui/react';
 import { api } from '../utils/api';
+import { Avatar } from '../components/ui/avatar';
 import type {
   CommunitySettings,
   AppVisibility,
@@ -155,6 +156,8 @@ interface AllApp {
   app_id: string;
   name: string;
   domain: string;
+  did: string | null;
+  avatarUrl: string | null;
 }
 
 function AppsTab({ did }: { did: string }) {
@@ -200,6 +203,7 @@ function AppsTab({ did }: { did: string }) {
     appId: a.app_id,
     name: a.name,
     domain: a.domain,
+    avatarUrl: a.avatarUrl || overrideMap.get(a.app_id)?.avatarUrl || null,
     status: overrideMap.get(a.app_id)?.status || 'default',
   }));
 
@@ -224,10 +228,17 @@ function AppsTab({ did }: { did: string }) {
           borderColor="border.card"
         >
           <Flex justify="space-between" align="center" mb={2}>
-            <Box>
-              <Text fontWeight="semibold" fontSize="sm">{app.name}</Text>
-              <Text fontSize="xs" color="fg.muted">{app.domain}</Text>
-            </Box>
+            <HStack gap={3}>
+              <Avatar
+                name={app.name}
+                src={app.avatarUrl || undefined}
+                size="sm"
+              />
+              <Box>
+                <Text fontWeight="semibold" fontSize="sm">{app.name}</Text>
+                <Text fontSize="xs" color="fg.muted">{app.domain}</Text>
+              </Box>
+            </HStack>
             <HStack gap={2}>
               <Badge
                 colorPalette={

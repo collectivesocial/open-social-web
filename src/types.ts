@@ -25,7 +25,11 @@ export interface CommunityDetails {
   };
   memberCount: number;
   isAdmin: boolean;
+  isMember: boolean;
+  isPrimaryAdmin: boolean;
+  isAuthenticated: boolean;
   userRole?: string;
+  credentialError?: boolean;
 }
 
 export interface Membership {
@@ -54,6 +58,7 @@ export interface Member {
   avatar?: string;
   confirmedAt?: string;
   isAdmin?: boolean;
+  isPrimaryAdmin?: boolean;
   roles?: { name: string; displayName: string }[];
 }
 

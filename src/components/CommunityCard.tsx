@@ -15,22 +15,7 @@ import {
   DialogCloseTrigger,
 } from './ui/dialog';
 import { Button } from '@chakra-ui/react';
-
-interface Community {
-  did: string;
-  displayName: string;
-  description?: string;
-  avatar?: string;
-}
-
-interface Membership {
-  uri: string;
-  communityDid: string;
-  joinedAt: string;
-  status: 'active' | 'pending';
-  community: Community;
-  isOnlyAdmin?: boolean;
-}
+import type { Membership } from '../types';
 
 interface CommunityCardProps {
   membership: Membership;
@@ -198,7 +183,7 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
         {/* Content */}
         <Box flex={1} minW={0}>
           <Flex justify="space-between" align="flex-start" mb={2}>
-            <Heading size="md" lineClamp={1} fontFamily="heading">
+            <Heading size="md" lineClamp={1}>
               {community.displayName}
             </Heading>
             <Badge

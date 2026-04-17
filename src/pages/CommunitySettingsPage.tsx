@@ -16,6 +16,8 @@ import {
   HStack,
   Grid,
   Textarea,
+  NativeSelectRoot,
+  NativeSelectField,
 } from '@chakra-ui/react';
 import { api } from '../utils/api';
 import type {
@@ -30,22 +32,16 @@ const PERMISSION_LEVELS = ['member', 'admin'] as const;
 
 function PermSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        width: '100%',
-        padding: '4px 8px',
-        borderRadius: '6px',
-        border: '1px solid var(--chakra-colors-border-card)',
-        backgroundColor: 'var(--chakra-colors-bg-subtle)',
-        fontSize: '0.75rem',
-      }}
-    >
-      {PERMISSION_LEVELS.map((l) => (
-        <option key={l} value={l}>{l}</option>
-      ))}
-    </select>
+    <NativeSelectRoot size="xs">
+      <NativeSelectField
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {PERMISSION_LEVELS.map((l) => (
+          <option key={l} value={l}>{l}</option>
+        ))}
+      </NativeSelectField>
+    </NativeSelectRoot>
   );
 }
 
@@ -97,48 +93,36 @@ function SettingsTab({ did }: { did: string }) {
   return (
     <VStack gap={5} align="stretch">
       <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
-        <Heading size="sm" mb={3} fontFamily="heading">Community Type</Heading>
+        <Heading size="sm" mb={3}>Community Type</Heading>
         <Text fontSize="sm" color="fg.muted" mb={3}>
           Controls who can join this community and how membership requests are handled.
         </Text>
-        <select
-          value={settings.communityType || 'open'}
-          onChange={(e) => setSettings({ ...settings, communityType: e.target.value as any })}
-          style={{
-            width: '100%',
-            maxWidth: '300px',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            border: '1px solid var(--chakra-colors-border-card)',
-            backgroundColor: 'var(--chakra-colors-bg-subtle)',
-          }}
-        >
-          <option value="open">Open — anyone can join</option>
-          <option value="admin-approved">Admin Approved — requests require approval</option>
-          <option value="private">Private — invite only</option>
-        </select>
+        <NativeSelectRoot size="sm" maxW="300px">
+          <NativeSelectField
+            value={settings.communityType || 'open'}
+            onChange={(e) => setSettings({ ...settings, communityType: e.target.value as any })}
+          >
+            <option value="open">Open — anyone can join</option>
+            <option value="admin-approved">Admin Approved — requests require approval</option>
+            <option value="private">Private — invite only</option>
+          </NativeSelectField>
+        </NativeSelectRoot>
       </Box>
 
       <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
-        <Heading size="sm" mb={3} fontFamily="heading">App Visibility Default</Heading>
+        <Heading size="sm" mb={3}>App Visibility Default</Heading>
         <Text fontSize="sm" color="fg.muted" mb={3}>
           When an app first interacts with this community, should it be allowed by default or require admin approval?
         </Text>
-        <select
-          value={settings.appVisibilityDefault}
-          onChange={(e) => setSettings({ ...settings, appVisibilityDefault: e.target.value as any })}
-          style={{
-            width: '100%',
-            maxWidth: '300px',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            border: '1px solid var(--chakra-colors-border-card)',
-            backgroundColor: 'var(--chakra-colors-bg-subtle)',
-          }}
-        >
-          <option value="open">Open — apps allowed by default</option>
-          <option value="approval_required">Approval Required — admin must enable each app</option>
-        </select>
+        <NativeSelectRoot size="sm" maxW="300px">
+          <NativeSelectField
+            value={settings.appVisibilityDefault}
+            onChange={(e) => setSettings({ ...settings, appVisibilityDefault: e.target.value as any })}
+          >
+            <option value="open">Open — apps allowed by default</option>
+            <option value="approval_required">Approval Required — admin must enable each app</option>
+          </NativeSelectField>
+        </NativeSelectRoot>
       </Box>
 
       <Flex justify="flex-end">
@@ -489,7 +473,7 @@ function RolesTab({ did }: { did: string }) {
       {showCreate && (
         <Box bg="bg.card" borderRadius="xl" shadow="sm" p={4} borderWidth="1px" borderColor="border.card">
           <VStack gap={3} align="stretch">
-            <Heading size="xs" fontFamily="heading">Create Role</Heading>
+            <Heading size="xs">Create Role</Heading>
             <Flex gap={3} flexWrap="wrap">
               <Box flex="1" minW="150px">
                 <Text fontSize="xs" color="fg.subtle" mb={1}>Name (lowercase, no spaces)</Text>
@@ -688,7 +672,7 @@ function SharedContentSettings({ did }: { did: string }) {
 
   return (
     <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card" mb={5}>
-      <Heading size="sm" mb={2} fontFamily="heading">Shared Content Settings</Heading>
+      <Heading size="sm" mb={2}>Shared Content Settings</Heading>
       <Text fontSize="sm" color="fg.muted" mb={4}>
         Control whether members can share content with this community, and who is allowed to share or manage shared items.
       </Text>
@@ -1034,7 +1018,7 @@ export function CommunitySettingsPage() {
 
   if (error) {
     return (
-      <Container maxW="1920px" py={8} px={{ base: 4, md: 6 }}>
+      <Container maxW="container.workspace" py={8} px={{ base: 4, md: 6 }}>
         <Text color="fg.error">{error}</Text>
       </Container>
     );
@@ -1049,7 +1033,7 @@ export function CommunitySettingsPage() {
   ];
 
   return (
-    <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+    <Container maxW="container.workspace" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
       <VStack gap={6} align="stretch">
         {/* Header */}
         <Flex
@@ -1067,7 +1051,7 @@ export function CommunitySettingsPage() {
             >
               ← Back to Community
             </Button>
-            <Heading size={{ base: 'md', md: 'lg' }} fontFamily="heading">
+            <Heading size={{ base: 'md', md: 'lg' }}>
               {communityName} — Settings
             </Heading>
           </Box>

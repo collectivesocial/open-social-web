@@ -7,6 +7,7 @@ import { ThemeProvider, useTheme } from "next-themes"
 export type ColorModeProviderProps = {
   children?: ReactNode
   forcedTheme?: string
+  defaultTheme?: string
 }
 
 export function ColorModeProvider(props: ColorModeProviderProps) {
@@ -14,6 +15,7 @@ export function ColorModeProvider(props: ColorModeProviderProps) {
     <ThemeProvider
       attribute="class"
       disableTransitionOnChange
+      defaultTheme={props.defaultTheme}
       forcedTheme={props.forcedTheme}
     >
       {props.children}

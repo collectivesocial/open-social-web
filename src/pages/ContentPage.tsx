@@ -70,7 +70,7 @@ export function ContentPage() {
 
   if (loading) {
     return (
-      <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+      <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <Center py={12}>
           <Spinner size="xl" color="accent.default" />
         </Center>
@@ -79,11 +79,11 @@ export function ContentPage() {
   }
 
   return (
-    <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+    <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
       <VStack gap={6} align="stretch">
         <Flex justify="space-between" align="center">
           <Box>
-            <Heading size={{ base: 'lg', md: 'xl' }} fontFamily="heading">
+            <Heading size={{ base: 'lg', md: 'xl' }}>
               My Content
             </Heading>
             <Text color="fg.muted" mt={1}>

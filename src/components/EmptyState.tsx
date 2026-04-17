@@ -21,7 +21,7 @@ export function EmptyState({ title, description }: EmptyStateProps) {
         <Box fontSize="4xl" color="fg.subtle" mb={2}>
           🏘️
         </Box>
-        <Heading size="md" color="fg.default" fontFamily="heading">
+        <Heading size="md" color="fg.default">
           {title}
         </Heading>
         <Text color="fg.muted" maxW="md">

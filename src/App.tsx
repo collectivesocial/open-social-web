@@ -11,35 +11,12 @@ import { CommunityPage } from './pages/CommunityPage';
 import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
 import { ContentPage } from './pages/ContentPage';
+import type { User, Community, Membership } from './types';
 import './App.css';
 
 // In dev, Vite proxy forwards relative paths to the backend.
 // In production, VITE_API_URL must point to the deployed API origin.
 const API_URL = import.meta.env.VITE_API_URL || '';
-
-interface User {
-  did: string;
-  handle: string;
-  displayName?: string;
-  avatar?: string;
-  description?: string;
-}
-
-interface Community {
-  did: string;
-  displayName: string;
-  description?: string;
-  avatar?: string;
-}
-
-interface Membership {
-  uri: string;
-  communityDid: string;
-  joinedAt: string;
-  status: 'active' | 'pending';
-  community: Community;
-  isOnlyAdmin?: boolean;
-}
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -227,18 +204,23 @@ function HomePage() {
   };
 
   return (
-    <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
-        <VStack gap={6} align="stretch">
+    <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+        <VStack gap={8} align="stretch">
           {/* Search Communities */}
-          <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
-            <Heading size="md" mb={3} fontFamily="heading">
+          <Box>
+            <Heading size={{ base: 'lg', md: 'xl' }} mb={2}>
               Find Communities
             </Heading>
+            <Text color="fg.muted" mb={4} fontSize={{ base: 'sm', md: 'md' }}>
+              Discover communities on the ATProto network
+            </Text>
             <Input
-              placeholder="Search communities by name or handle..."
+              placeholder="Search by name or handle…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="lg"
+              bg="bg.card"
+              borderColor="border.card"
             />
 
             {searchLoading && (
@@ -270,11 +252,12 @@ function HomePage() {
                     borderRadius="lg"
                     borderWidth="1px"
                     borderColor="border.card"
-                    bg="bg.subtle"
-                    _hover={{ bg: 'bg.muted', cursor: 'pointer' }}
+                    bg="bg.card"
+                    _hover={{ bg: 'bg.subtle', cursor: 'pointer' }}
                     onClick={() => {
                       window.location.href = `/communities/${encodeURIComponent(community.did)}`;
                     }}
+                    transition="background 0.15s"
                   >
                     <Box
                       w="40px"
@@ -309,24 +292,25 @@ function HomePage() {
           </Box>
 
           {/* My Communities */}
-          <Flex 
-            direction={{ base: 'column', md: 'row' }} 
-            justify="space-between" 
-            align={{ base: 'stretch', md: 'center' }}
-            gap={{ base: 4, md: 0 }}
-          >
-            <Box>
-              <Heading size={{ base: 'md', md: 'lg' }} mb={2} fontFamily="heading">My Communities</Heading>
-              <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
-                Communities you've joined on OpenSocial
-              </Text>
-            </Box>
-            <CreateCommunityModal onSuccess={fetchMemberships} />
-          </Flex>
+          <Box>
+            <Flex 
+              direction={{ base: 'column', md: 'row' }} 
+              justify="space-between" 
+              align={{ base: 'stretch', md: 'center' }}
+              gap={{ base: 4, md: 0 }}
+              mb={4}
+            >
+              <Box>
+                <Heading size={{ base: 'lg', md: 'xl' }} mb={1}>My Communities</Heading>
+                <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
+                  Communities you've joined on OpenSocial
+                </Text>
+              </Box>
+              <CreateCommunityModal onSuccess={fetchMemberships} />
+            </Flex>
 
           {membershipsLoading ? (
-            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
-              <CommunityCardSkeleton />
+            <Grid templateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(280px, 1fr))' }} gap={4}>
               <CommunityCardSkeleton />
               <CommunityCardSkeleton />
               <CommunityCardSkeleton />
@@ -337,7 +321,7 @@ function HomePage() {
               description="You haven't joined any communities yet. Join a community to get started and connect with others who share your interests."
             />
           ) : (
-            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
+            <Grid templateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(280px, 1fr))' }} gap={4}>
               {memberships.map((membership) => (
                 <CommunityCard 
                   key={membership.uri} 
@@ -347,6 +331,7 @@ function HomePage() {
               ))}
             </Grid>
           )}
+          </Box>
         </VStack>
       </Container>
   );
@@ -391,48 +376,74 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
   };
 
   return (
-    <Container maxW="container.sm" py={20}>
-      <VStack gap={8} align="stretch">
-        <Box textAlign="center">
-          <Heading size="2xl" mb={2} color="fg.default" fontFamily="heading">OpenSocial</Heading>
-          <Text fontSize="lg" color="fg.muted">
-            Community management for ATProto apps
-          </Text>
-        </Box>
-        
-        <Box bg="bg.card" p={8} borderRadius="xl" shadow="md" borderWidth="1px" borderColor="border.card">
-          <form onSubmit={handleLogin}>
-            <VStack gap={4} align="stretch">
-              <Heading size="lg" color="fg.default" fontFamily="heading">Login with ATProtocol</Heading>
-              <Input
-                type="text"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-                placeholder="your-handle.bsky.social"
-                disabled={isLoading}
-                required
-                size="lg"
-              />
-              <Button
-                type="submit"
-                disabled={isLoading || !handle}
-                colorPalette="accent"
-                variant="solid"
-                size="lg"
-                width="full"
-              >
-                {isLoading ? 'Redirecting...' : 'Login'}
-              </Button>
-              {error && (
-                <Text color="fg.error" fontSize="sm">
-                  {error}
-                </Text>
-              )}
-            </VStack>
-          </form>
-        </Box>
-      </VStack>
-    </Container>
+    <Box minH="calc(100vh - 60px)" display="flex" alignItems="center" justifyContent="center" px={4}>
+      <Box maxW="420px" w="100%">
+        <VStack gap={8} align="stretch">
+          {/* Hero */}
+          <Box>
+            <Heading
+              size={{ base: '2xl', md: '3xl' }}
+              mb={3}
+              color="fg.default"
+              fontFamily="heading"
+              lineHeight="1.1"
+            >
+              Your communities,
+              <br />
+              <Text as="span" color="accent.default">connected.</Text>
+            </Heading>
+            <Text fontSize={{ base: 'md', md: 'lg' }} color="fg.muted" lineHeight="1.6" maxW="38ch">
+              Open Social brings community management to the ATProto network.
+              Join communities, share content, and build together.
+            </Text>
+          </Box>
+          
+          {/* Login form */}
+          <Box
+            bg="bg.card"
+            p={{ base: 6, md: 8 }}
+            borderRadius="xl"
+            shadow="sm"
+            borderWidth="1px"
+            borderColor="border.card"
+          >
+            <form onSubmit={handleLogin}>
+              <VStack gap={4} align="stretch">
+                <Box>
+                  <Text fontSize="sm" fontWeight="medium" mb={1.5} color="fg.default">
+                    Your Bluesky handle
+                  </Text>
+                  <Input
+                    type="text"
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value)}
+                    placeholder="handle.bsky.social"
+                    disabled={isLoading}
+                    required
+                    size="lg"
+                  />
+                </Box>
+                <Button
+                  type="submit"
+                  disabled={isLoading || !handle}
+                  colorPalette="accent"
+                  variant="solid"
+                  size="lg"
+                  width="full"
+                >
+                  {isLoading ? 'Redirecting…' : 'Log in with ATProto'}
+                </Button>
+                {error && (
+                  <Text color="fg.error" fontSize="sm">
+                    {error}
+                  </Text>
+                )}
+              </VStack>
+            </form>
+          </Box>
+        </VStack>
+      </Box>
+    </Box>
   );
 }
 

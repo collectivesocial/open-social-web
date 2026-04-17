@@ -14,6 +14,8 @@ import {
   Badge,
   Input,
   HStack,
+  NativeSelectRoot,
+  NativeSelectField,
 } from '@chakra-ui/react';
 import { RegisterAppModal } from '../components/RegisterAppModal';
 import { EmptyState } from '../components/EmptyState';
@@ -30,22 +32,16 @@ function PermissionSelect({
   onChange: (v: string) => void;
 }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        width: '100%',
-        padding: '4px 8px',
-        borderRadius: '6px',
-        border: '1px solid var(--chakra-colors-border-card)',
-        backgroundColor: 'var(--chakra-colors-bg-subtle)',
-        fontSize: '0.75rem',
-      }}
-    >
-      {PERMISSION_LEVELS.map((level) => (
-        <option key={level} value={level}>{level}</option>
-      ))}
-    </select>
+    <NativeSelectRoot size="xs">
+      <NativeSelectField
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {PERMISSION_LEVELS.map((level) => (
+          <option key={level} value={level}>{level}</option>
+        ))}
+      </NativeSelectField>
+    </NativeSelectRoot>
   );
 }
 
@@ -242,7 +238,7 @@ function AppCard({
     <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
       <Flex justify="space-between" align="start" mb={3}>
         <Box>
-          <Heading size="sm" mb={1} fontFamily="heading">{app.name}</Heading>
+          <Heading size="sm" mb={1}>{app.name}</Heading>
           <Text fontSize="sm" color="fg.muted">{app.domain}</Text>
         </Box>
         <Badge
@@ -364,7 +360,7 @@ export function AppsPage() {
   };
 
   return (
-    <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+    <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
       <VStack gap={6} align="stretch">
         <Flex
           direction={{ base: 'column', md: 'row' }}
@@ -373,7 +369,7 @@ export function AppsPage() {
           gap={{ base: 4, md: 0 }}
         >
           <Box>
-            <Heading size={{ base: 'md', md: 'lg' }} mb={2} fontFamily="heading">Developer Apps</Heading>
+            <Heading size={{ base: 'lg', md: 'xl' }} mb={1}>Developer Apps</Heading>
             <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
               Register and manage apps that use the OpenSocial API
             </Text>
@@ -417,8 +413,7 @@ export function AppsPage() {
           <Grid
             templateColumns={{
               base: '1fr',
-              md: 'repeat(2, 1fr)',
-              lg: 'repeat(3, 1fr)',
+              sm: 'repeat(auto-fit, minmax(320px, 1fr))',
             }}
             gap={4}
           >

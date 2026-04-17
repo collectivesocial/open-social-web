@@ -17,6 +17,8 @@ import {
   Code,
   Flex,
   HStack,
+  NativeSelectRoot,
+  NativeSelectField,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { api } from '../utils/api';
@@ -274,22 +276,16 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                         return (
                           <Box key={field} flex="1" minW="100px">
                             <Text fontSize="xs" color="fg.subtle" mb={1}>{label}</Text>
-                            <select
-                              value={perm[field]}
-                              onChange={(e) => updatePermission(idx, field, e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid var(--chakra-colors-border-card)',
-                                backgroundColor: 'var(--chakra-colors-bg-subtle)',
-                                fontSize: '0.75rem',
-                              }}
-                            >
-                              {PERMISSION_LEVELS.map((level) => (
-                                <option key={level} value={level}>{level}</option>
-                              ))}
-                            </select>
+                            <NativeSelectRoot size="xs">
+                              <NativeSelectField
+                                value={perm[field]}
+                                onChange={(e) => updatePermission(idx, field, e.target.value)}
+                              >
+                                {PERMISSION_LEVELS.map((level) => (
+                                  <option key={level} value={level}>{level}</option>
+                                ))}
+                              </NativeSelectField>
+                            </NativeSelectRoot>
                           </Box>
                         );
                       })}

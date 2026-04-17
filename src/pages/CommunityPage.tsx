@@ -20,37 +20,7 @@ import {
   Grid,
 } from '@chakra-ui/react';
 import { Avatar } from '../components/ui/avatar';
-
-interface Community {
-  did: string;
-  displayName: string;
-  description?: string;
-  type?: 'open' | 'admin-approved' | 'private';
-  avatar?: string;
-  banner?: string;
-}
-
-interface CommunityDetails {
-  community: Community;
-  memberCount: number;
-  isAdmin: boolean;
-  isMember: boolean;
-  isPrimaryAdmin: boolean;
-  isAuthenticated: boolean;
-  userRole?: string;
-  credentialError?: boolean;
-}
-
-interface Member {
-  did: string;
-  handle?: string;
-  displayName?: string;
-  avatar?: string;
-  confirmedAt?: string;
-  isAdmin?: boolean;
-  isPrimaryAdmin?: boolean;
-  roles?: { name: string; displayName: string }[];
-}
+import type { CommunityDetails, Member } from '../types';
 
 interface MembersResponse {
   members: Member[];
@@ -468,7 +438,7 @@ export function CommunityPage() {
   if (error && !details) {
     return (
       <Box minH="100vh" bg="bg.page">
-        <Container maxW="1920px" py={8}>
+        <Container maxW="container.content" py={8}>
           <VStack gap={4}>
             <Text color="fg.error">{error}</Text>
             <Button onClick={() => navigate('/')}>Go Back</Button>
@@ -499,7 +469,7 @@ export function CommunityPage() {
             backgroundPosition="center"
           />
         )}
-        <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+        <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
           <VStack gap={6} align="stretch">
             <Flex
               direction={{ base: 'column', md: 'row' }}
@@ -549,7 +519,7 @@ export function CommunityPage() {
             <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
               {!isAuthenticated ? (
                 <VStack gap={4} align="center" py={4}>
-                  <Heading size="md" fontFamily="heading">
+                  <Heading size="md">
                     Join {community.displayName}
                   </Heading>
                   <Text color="fg.muted" textAlign="center">
@@ -574,7 +544,7 @@ export function CommunityPage() {
                 </VStack>
               ) : joinStatus === 'joined' || joinStatus === 'already_member' ? (
                 <VStack gap={4} align="center" py={4}>
-                  <Heading size="md" fontFamily="heading" color="green.500">
+                  <Heading size="md" color="green.500">
                     ✓ {joinStatus === 'already_member' ? 'Already a member!' : 'Joined successfully!'}
                   </Heading>
                   {returnTo && (
@@ -594,7 +564,7 @@ export function CommunityPage() {
                 </VStack>
               ) : joinStatus === 'pending' ? (
                 <VStack gap={4} align="center" py={4}>
-                  <Heading size="md" fontFamily="heading" color="orange.500">
+                  <Heading size="md" color="orange.500">
                     ⏳ Join Request Submitted
                   </Heading>
                   <Text color="fg.muted" textAlign="center">
@@ -608,7 +578,7 @@ export function CommunityPage() {
                 </VStack>
               ) : (
                 <VStack gap={4} align="center" py={4}>
-                  <Heading size="md" fontFamily="heading">
+                  <Heading size="md">
                     Join {community.displayName}
                   </Heading>
                   <Text color="fg.muted" textAlign="center">
@@ -651,7 +621,7 @@ export function CommunityPage() {
         />
       )}
 
-      <Container maxW="1920px" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
+      <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <VStack gap={6} align="stretch">
           {/* Header Section */}
           <Flex
@@ -661,7 +631,7 @@ export function CommunityPage() {
             mt={community.banner ? -16 : 0}
           >
             {/* Avatar with upload for admins */}
-            <Box position="relative">
+            <Flex direction="column" align="center">
               <Avatar
                 name={community.displayName}
                 src={community.avatar}
@@ -694,7 +664,7 @@ export function CommunityPage() {
                   </label>
                 </Box>
               )}
-            </Box>
+            </Flex>
 
             {/* Community Info */}
             <VStack align={{ base: 'center', md: 'flex-start' }} flex={1} gap={2}>
@@ -744,30 +714,34 @@ export function CommunityPage() {
                 </VStack>
               ) : (
                 <>
-                  <HStack gap={3} align="center">
+                  <Flex
+                    direction={{ base: 'column', md: 'row' }}
+                    gap={{ base: 2, md: 3 }}
+                    align={{ base: 'center', md: 'center' }}
+                  >
                     <Heading size={{ base: 'lg', md: 'xl' }} fontFamily="heading">{community.displayName}</Heading>
                     {isAdmin && (
-                      <Button
-                        onClick={handleEditClick}
-                        size="sm"
-                        variant="ghost"
-                        bg="transparent"
-                        colorPalette="accent"
-                      >
-                        Edit
-                      </Button>
+                      <Flex gap={2} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
+                        <Button
+                          onClick={handleEditClick}
+                          size="sm"
+                          variant="ghost"
+                          bg="transparent"
+                          colorPalette="accent"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={() => navigate(`/communities/${encodeURIComponent(did!)}/settings`)}
+                          size="sm"
+                          variant="outline"
+                          colorPalette="orange"
+                        >
+                          ⚙ Settings
+                        </Button>
+                      </Flex>
                     )}
-                    {isAdmin && (
-                      <Button
-                        onClick={() => navigate(`/communities/${encodeURIComponent(did!)}/settings`)}
-                        size="sm"
-                        variant="outline"
-                        colorPalette="orange"
-                      >
-                        ⚙ Settings
-                      </Button>
-                    )}
-                  </HStack>
+                  </Flex>
                   
                   <HStack gap={2}>
                     <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
@@ -837,7 +811,7 @@ export function CommunityPage() {
               <VStack gap={4} align="stretch">
                 <HStack gap={2}>
                   <Text fontSize="lg" fontWeight="bold">⚠️</Text>
-                  <Heading size="sm" fontFamily="heading" color="orange.700">
+                  <Heading size="sm" color="orange.700">
                     Community App Password Needs Updating
                   </Heading>
                 </HStack>
@@ -930,7 +904,7 @@ export function CommunityPage() {
           {/* Members Section */}
           <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
             <Flex justify="space-between" align="center" mb={4}>
-              <Heading size="md" fontFamily="heading">
+              <Heading size="md">
                 Members ({membersTotal})
               </Heading>
             </Flex>

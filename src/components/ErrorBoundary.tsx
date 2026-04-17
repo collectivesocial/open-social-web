@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <VStack gap={4} align="stretch">
               <Box textAlign="center">
                 <Box fontSize="4xl" mb={2}>⚠️</Box>
-                <Heading size="lg" color="fg.error" fontFamily="heading" mb={2}>
+                <Heading size="lg" color="fg.error" mb={2}>
                   Something went wrong
                 </Heading>
                 <Text color="fg.muted" fontSize="sm">

@@ -23,6 +23,7 @@ import type {
   AppVisibility,
   CollectionPermission,
   CommunityRole,
+  SharedContent,
 } from '../types';
 
 const PERMISSION_LEVELS = ['member', 'admin'] as const;
@@ -614,6 +615,138 @@ interface AuditLogEntry {
   createdAt: string;
 }
 
+// ─── Tab: Shared Content ──────────────────────────────────────────────
+
+function SharedContentTab({ did }: { did: string }) {
+  const [records, setRecords] = useState<SharedContent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+
+  const fetchContent = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.get<{ records: SharedContent[] }>(
+        `/api/v1/communities/${encodeURIComponent(did)}/content`,
+      );
+      setRecords(data.records);
+    } catch {
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [did]);
+
+  useEffect(() => { fetchContent(); }, [fetchContent]);
+
+  const handleRemove = async (rkey: string) => {
+    setRemoving(rkey);
+    try {
+      await api.del(
+        `/api/v1/communities/${encodeURIComponent(did)}/content/${rkey}`,
+      );
+      setRecords((prev) => prev.filter((r) => r.rkey !== rkey));
+    } catch (err) {
+      console.error('Failed to remove shared content:', err);
+    } finally {
+      setRemoving(null);
+      setConfirmRemove(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Center py={8}>
+        <Spinner size="md" color="accent.default" />
+      </Center>
+    );
+  }
+
+  if (records.length === 0) {
+    return (
+      <Box py={8} textAlign="center">
+        <Text color="fg.muted">No content has been shared with this community yet.</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <VStack gap={3} align="stretch">
+      <Text fontSize="sm" color="fg.muted">
+        {records.length} shared item{records.length !== 1 ? 's' : ''}
+      </Text>
+      {records.map((record) => (
+        <Box
+          key={record.rkey}
+          p={4}
+          borderWidth="1px"
+          borderColor="border.card"
+          borderRadius="lg"
+          bg="bg.card"
+        >
+          <Flex justify="space-between" align="flex-start" gap={4}>
+            <Box flex={1} minW={0}>
+              <Text fontWeight="medium" fontSize="sm">
+                {record.title}
+              </Text>
+              <Flex gap={3} mt={1} align="center" flexWrap="wrap">
+                <Badge variant="subtle" size="sm">
+                  {record.type}
+                </Badge>
+                {record.path && (
+                  <Text fontSize="xs" color="fg.muted" truncate>
+                    {record.path}
+                  </Text>
+                )}
+                <Text fontSize="xs" color="fg.muted">
+                  Shared {new Date(record.sharedAt).toLocaleDateString()}
+                </Text>
+              </Flex>
+              <Text fontSize="xs" color="fg.subtle" mt={1} truncate>
+                By: {record.sharedBy}
+              </Text>
+            </Box>
+
+            <Box flexShrink={0}>
+              {confirmRemove === record.rkey ? (
+                <Flex gap={2}>
+                  <Button
+                    size="xs"
+                    colorPalette="red"
+                    variant="solid"
+                    loading={removing === record.rkey}
+                    onClick={() => handleRemove(record.rkey)}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => setConfirmRemove(null)}
+                  >
+                    Cancel
+                  </Button>
+                </Flex>
+              ) : (
+                <Button
+                  size="xs"
+                  colorPalette="red"
+                  variant="outline"
+                  onClick={() => setConfirmRemove(record.rkey)}
+                >
+                  Remove
+                </Button>
+              )}
+            </Box>
+          </Flex>
+        </Box>
+      ))}
+    </VStack>
+  );
+}
+
+// ─── Tab: Audit Log ──────────────────────────────────────────────────
+
 function AuditLogTab({ did }: { did: string }) {
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -717,7 +850,7 @@ function AuditLogTab({ did }: { did: string }) {
   );
 }
 
-type TabName = 'settings' | 'apps' | 'roles' | 'audit-log';
+type TabName = 'settings' | 'apps' | 'content' | 'roles' | 'audit-log';
 
 export function CommunitySettingsPage() {
   const { did } = useParams<{ did: string }>();
@@ -771,6 +904,7 @@ export function CommunitySettingsPage() {
   const tabs: { key: TabName; label: string }[] = [
     { key: 'settings', label: 'Settings' },
     { key: 'apps', label: 'Apps' },
+    { key: 'content', label: 'Shared Content' },
     { key: 'roles', label: 'Roles' },
     ...(canViewAuditLog ? [{ key: 'audit-log' as TabName, label: 'Audit Log' }] : []),
   ];
@@ -828,6 +962,7 @@ export function CommunitySettingsPage() {
         {/* Tab content */}
         {tab === 'settings' && <SettingsTab did={did} />}
         {tab === 'apps' && <AppsTab did={did} />}
+        {tab === 'content' && <SharedContentTab did={did} />}
         {tab === 'roles' && <RolesTab did={did} />}
         {tab === 'audit-log' && canViewAuditLog && <AuditLogTab did={did} />}
       </VStack>

@@ -10,6 +10,7 @@ import { sanitizeRedirectUrl } from './utils/redirect';
 import { CommunityPage } from './pages/CommunityPage';
 import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
+import { ContentPage } from './pages/ContentPage';
 import './App.css';
 
 // In dev, Vite proxy forwards relative paths to the backend.
@@ -121,6 +122,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/apps" element={<AppsPage />} />
+        <Route path="/content" element={<ContentPage />} />
         <Route path="/communities/:did" element={<CommunityPage />} />
         <Route path="/communities/:did/settings" element={<CommunitySettingsPage />} />
       </Routes>

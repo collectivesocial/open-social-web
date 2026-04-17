@@ -106,3 +106,26 @@ export interface AppDefaultPermission {
   defaultCanUpdate: string;
   defaultCanDelete: string;
 }
+
+// ─── Content sharing types ────────────────────────────────────────────
+
+export interface Publication {
+  uri: string;
+  cid: string;
+  title: string;
+  path?: string;
+  publishedAt?: string;
+  coverImage?: boolean;
+}
+
+export interface SharedContent {
+  uri: string;
+  rkey: string;
+  type: string;
+  documentUri: string;
+  documentCid: string;
+  sharedBy: string;
+  title: string;
+  path?: string;
+  sharedAt: string;
+}

@@ -73,6 +73,17 @@ export function Navbar({ user, onLogout }: NavbarProps) {
               >
                 Developer Apps
               </Text>
+              <Text
+                fontSize="sm"
+                fontWeight="medium"
+                color="fg.muted"
+                cursor="pointer"
+                onClick={() => navigate('/content')}
+                _hover={{ color: 'accent.default' }}
+                transition="color 0.2s"
+              >
+                Content
+              </Text>
             </HStack>
           )}
         </HStack>
@@ -105,6 +116,9 @@ export function Navbar({ user, onLogout }: NavbarProps) {
               </MenuItem>
               <MenuItem value="apps" onClick={() => navigate('/apps')}>
                 Developer Apps
+              </MenuItem>
+              <MenuItem value="content" onClick={() => navigate('/content')}>
+                Content
               </MenuItem>
               <MenuItem value="logout" color="red.600" onClick={onLogout}>
                 Logout

@@ -15,11 +15,18 @@ import {
   Spinner,
   Center,
   Flex,
+  Badge,
 } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 import { Avatar } from './ui/avatar';
 import type { Publication, Membership } from '../types';
+
+interface SharedStatus {
+  shared: boolean;
+  rkey?: string;
+  sharedBy?: string;
+}
 
 interface ShareContentModalProps {
   publication: Publication | null;
@@ -36,6 +43,39 @@ export function ShareContentModal({
 }: ShareContentModalProps) {
   const [sharing, setSharing] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [sharedStatus, setSharedStatus] = useState<Record<string, SharedStatus>>({});
+  const [checking, setChecking] = useState(false);
+  const [unsharing, setUnsharing] = useState<Record<string, boolean>>({});
+
+  const activeMemberships = memberships.filter((m) => m.status === 'active');
+
+  const checkSharedStatus = useCallback(async () => {
+    if (!publication || activeMemberships.length === 0) return;
+    setChecking(true);
+    try {
+      const results = await Promise.all(
+        activeMemberships.map(async (m) => {
+          try {
+            const data = await api.get<SharedStatus>(
+              `/api/v1/communities/${encodeURIComponent(m.communityDid)}/content/check?documentUri=${encodeURIComponent(publication.uri)}`,
+            );
+            return [m.communityDid, data] as const;
+          } catch {
+            return [m.communityDid, { shared: false }] as const;
+          }
+        }),
+      );
+      setSharedStatus(Object.fromEntries(results));
+    } finally {
+      setChecking(false);
+    }
+  }, [publication, activeMemberships]);
+
+  useEffect(() => {
+    if (open) {
+      checkSharedStatus();
+    }
+  }, [open, checkSharedStatus]);
 
   const handleShare = async (communityDid: string) => {
     if (!publication) return;
@@ -52,10 +92,38 @@ export function ShareContentModal({
         path: publication.path,
       });
       setSharing((prev) => ({ ...prev, [communityDid]: 'success' }));
+      // Re-check status to get the rkey for potential unshare
+      try {
+        const data = await api.get<SharedStatus>(
+          `/api/v1/communities/${encodeURIComponent(communityDid)}/content/check?documentUri=${encodeURIComponent(publication.uri)}`,
+        );
+        setSharedStatus((prev) => ({ ...prev, [communityDid]: data }));
+      } catch { /* ignore — success state still shows */ }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to share';
       setErrors((prev) => ({ ...prev, [communityDid]: message }));
       setSharing((prev) => ({ ...prev, [communityDid]: 'error' }));
+    }
+  };
+
+  const handleUnshare = async (communityDid: string) => {
+    const status = sharedStatus[communityDid];
+    if (!status?.rkey) return;
+
+    setUnsharing((prev) => ({ ...prev, [communityDid]: true }));
+    setErrors((prev) => ({ ...prev, [communityDid]: '' }));
+
+    try {
+      await api.del(
+        `/api/v1/communities/${encodeURIComponent(communityDid)}/content/${status.rkey}`,
+      );
+      setSharedStatus((prev) => ({ ...prev, [communityDid]: { shared: false } }));
+      setSharing((prev) => ({ ...prev, [communityDid]: 'idle' }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to unshare';
+      setErrors((prev) => ({ ...prev, [communityDid]: message }));
+    } finally {
+      setUnsharing((prev) => ({ ...prev, [communityDid]: false }));
     }
   };
 
@@ -65,10 +133,10 @@ export function ShareContentModal({
     setTimeout(() => {
       setSharing({});
       setErrors({});
+      setSharedStatus({});
+      setUnsharing({});
     }, 200);
   };
-
-  const activeMemberships = memberships.filter((m) => m.status === 'active');
 
   return (
     <DialogRoot open={open} onOpenChange={() => handleClose()}>
@@ -101,9 +169,17 @@ export function ShareContentModal({
               <Text fontSize="sm" color="fg.muted" mb={1}>
                 Select a community to share with:
               </Text>
+              {checking && (
+                <Center py={2}>
+                  <Spinner size="sm" color="accent.default" />
+                </Center>
+              )}
               {activeMemberships.map((membership) => {
                 const status = sharing[membership.communityDid] || 'idle';
                 const error = errors[membership.communityDid];
+                const shared = sharedStatus[membership.communityDid];
+                const isShared = shared?.shared || status === 'success';
+                const isUnsharing = unsharing[membership.communityDid] || false;
 
                 return (
                   <Flex
@@ -113,8 +189,9 @@ export function ShareContentModal({
                     p={3}
                     borderRadius="md"
                     borderWidth="1px"
-                    borderColor="border.card"
-                    _hover={status === 'idle' ? { borderColor: 'accent.default' } : undefined}
+                    borderColor={isShared ? 'green.200' : 'border.card'}
+                    bg={isShared ? 'green.50' : undefined}
+                    _hover={!isShared && status === 'idle' ? { borderColor: 'accent.default' } : undefined}
                     transition="border-color 0.2s"
                   >
                     <Flex align="center" gap={3} flex={1} minW={0}>
@@ -123,13 +200,31 @@ export function ShareContentModal({
                         src={membership.community.avatar}
                         size="sm"
                       />
-                      <Text fontSize="sm" fontWeight="medium" truncate>
-                        {membership.community.displayName}
-                      </Text>
+                      <Box minW={0}>
+                        <Text fontSize="sm" fontWeight="medium" truncate>
+                          {membership.community.displayName}
+                        </Text>
+                        {isShared && (
+                          <Badge colorPalette="green" size="sm" mt={0.5}>
+                            Shared
+                          </Badge>
+                        )}
+                      </Box>
                     </Flex>
 
                     <Box ml={3} flexShrink={0}>
-                      {status === 'idle' && (
+                      {isShared && shared?.rkey && (
+                        <Button
+                          size="xs"
+                          colorPalette="red"
+                          variant="outline"
+                          onClick={() => handleUnshare(membership.communityDid)}
+                          loading={isUnsharing}
+                        >
+                          Unshare
+                        </Button>
+                      )}
+                      {!isShared && status === 'idle' && (
                         <Button
                           size="xs"
                           colorPalette="accent"
@@ -140,14 +235,14 @@ export function ShareContentModal({
                         </Button>
                       )}
                       {status === 'loading' && <Spinner size="sm" color="accent.default" />}
-                      {status === 'success' && (
-                        <Text fontSize="xs" color="green.500" fontWeight="medium">
-                          Shared!
-                        </Text>
-                      )}
                       {status === 'error' && (
                         <Text fontSize="xs" color="fg.error" fontWeight="medium">
                           {error || 'Failed'}
+                        </Text>
+                      )}
+                      {error && isShared && (
+                        <Text fontSize="xs" color="fg.error" mt={1}>
+                          {error}
                         </Text>
                       )}
                     </Box>

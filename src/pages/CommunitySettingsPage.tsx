@@ -615,6 +615,138 @@ interface AuditLogEntry {
   createdAt: string;
 }
 
+// ─── Sub-component: Shared Content Settings ──────────────────────────
+
+const SYSTEM_APP_ID = 'app_system';
+const SHARED_CONTENT_COLLECTION = 'community.opensocial.sharedContent';
+
+function SharedContentSettings({ did }: { did: string }) {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [permissions, setPermissions] = useState<CollectionPermission | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchStatus = useCallback(async () => {
+    setLoading(true);
+    try {
+      const appsData = await api.get<{ apps: AppVisibility[] }>(
+        `/communities/${encodeURIComponent(did)}/apps`,
+      );
+      const systemApp = appsData.apps.find((a) => a.appId === SYSTEM_APP_ID);
+      setEnabled(systemApp?.status === 'enabled');
+
+      if (systemApp?.status === 'enabled') {
+        const permsData = await api.get<{ permissions: CollectionPermission[] }>(
+          `/communities/${encodeURIComponent(did)}/apps/${SYSTEM_APP_ID}/permissions`,
+        );
+        const contentPerm = permsData.permissions.find(
+          (p) => p.collection === SHARED_CONTENT_COLLECTION,
+        );
+        setPermissions(contentPerm || null);
+      }
+    } catch {
+      setEnabled(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [did]);
+
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+  const toggleEnabled = async () => {
+    setSaving(true);
+    try {
+      const newStatus = enabled ? 'disabled' : 'enabled';
+      await api.put(
+        `/communities/${encodeURIComponent(did)}/apps/${SYSTEM_APP_ID}`,
+        { status: newStatus },
+      );
+      await fetchStatus();
+    } catch (err) {
+      console.error('Failed to toggle shared content:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePermission = async (field: string, value: string) => {
+    setSaving(true);
+    try {
+      await api.put(
+        `/communities/${encodeURIComponent(did)}/apps/${SYSTEM_APP_ID}/permissions`,
+        { collection: SHARED_CONTENT_COLLECTION, [field]: value },
+      );
+      await fetchStatus();
+    } catch (err) {
+      console.error('Failed to update permission:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <Center py={4}><Spinner size="sm" color="accent.default" /></Center>;
+
+  return (
+    <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card" mb={5}>
+      <Heading size="sm" mb={2} fontFamily="heading">Shared Content Settings</Heading>
+      <Text fontSize="sm" color="fg.muted" mb={4}>
+        Control whether members can share content with this community, and who is allowed to share or manage shared items.
+      </Text>
+
+      <Flex align="center" gap={3} mb={enabled ? 4 : 0}>
+        <input
+          type="checkbox"
+          checked={enabled ?? false}
+          onChange={toggleEnabled}
+          disabled={saving}
+          id="shared-content-toggle"
+        />
+        <label htmlFor="shared-content-toggle" style={{ fontSize: 'var(--chakra-fontSizes-sm)', fontWeight: 500 }}>
+          Enable shared content
+        </label>
+        {saving && <Spinner size="xs" color="accent.default" />}
+      </Flex>
+
+      {enabled && permissions && (
+        <Box pt={3} borderTopWidth="1px" borderColor="border.subtle">
+          <Text fontSize="xs" fontWeight="bold" color="fg.muted" mb={3}>
+            Permission Levels
+          </Text>
+          <Flex gap={4} flexWrap="wrap">
+            <Box flex="1" minW="120px">
+              <Text fontSize="xs" color="fg.subtle" mb={1}>Who can share</Text>
+              <PermSelect
+                value={permissions.canCreate}
+                onChange={(v) => updatePermission('canCreate', v)}
+              />
+            </Box>
+            <Box flex="1" minW="120px">
+              <Text fontSize="xs" color="fg.subtle" mb={1}>Who can view</Text>
+              <PermSelect
+                value={permissions.canRead}
+                onChange={(v) => updatePermission('canRead', v)}
+              />
+            </Box>
+            <Box flex="1" minW="120px">
+              <Text fontSize="xs" color="fg.subtle" mb={1}>Who can remove</Text>
+              <PermSelect
+                value={permissions.canDelete}
+                onChange={(v) => updatePermission('canDelete', v)}
+              />
+            </Box>
+          </Flex>
+        </Box>
+      )}
+
+      {enabled && !permissions && (
+        <Text fontSize="xs" color="fg.subtle" mt={2}>
+          No permission overrides configured. Defaults apply (members can share, admins can remove).
+        </Text>
+      )}
+    </Box>
+  );
+}
+
 // ─── Tab: Shared Content ──────────────────────────────────────────────
 
 function SharedContentTab({ did }: { did: string }) {
@@ -656,22 +788,29 @@ function SharedContentTab({ did }: { did: string }) {
 
   if (loading) {
     return (
-      <Center py={8}>
-        <Spinner size="md" color="accent.default" />
-      </Center>
+      <VStack gap={3} align="stretch">
+        <SharedContentSettings did={did} />
+        <Center py={8}>
+          <Spinner size="md" color="accent.default" />
+        </Center>
+      </VStack>
     );
   }
 
   if (records.length === 0) {
     return (
-      <Box py={8} textAlign="center">
-        <Text color="fg.muted">No content has been shared with this community yet.</Text>
-      </Box>
+      <VStack gap={3} align="stretch">
+        <SharedContentSettings did={did} />
+        <Box py={8} textAlign="center">
+          <Text color="fg.muted">No content has been shared with this community yet.</Text>
+        </Box>
+      </VStack>
     );
   }
 
   return (
     <VStack gap={3} align="stretch">
+      <SharedContentSettings did={did} />
       <Text fontSize="sm" color="fg.muted">
         {records.length} shared item{records.length !== 1 ? 's' : ''}
       </Text>

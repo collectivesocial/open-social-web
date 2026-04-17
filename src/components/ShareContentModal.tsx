@@ -21,10 +21,6 @@ import { api } from '../utils/api';
 import { Avatar } from './ui/avatar';
 import type { Publication, Membership } from '../types';
 
-interface OpenChangeDetails {
-  open: boolean;
-}
-
 interface ShareContentModalProps {
   publication: Publication | null;
   memberships: Membership[];
@@ -76,7 +72,7 @@ export function ShareContentModal({
   const activeMemberships = memberships.filter((m) => m.status === 'active');
 
   return (
-    <DialogRoot open={open} onOpenChange={(e: OpenChangeDetails) => handleClose()}>
+    <DialogRoot open={open} onOpenChange={() => handleClose()}>
       <DialogContent maxW={{ base: '95vw', sm: '500px' }} mx={{ base: 2, sm: 4 }}>
         <DialogHeader>
           <DialogTitle>Share with Community</DialogTitle>

@@ -99,7 +99,7 @@ export function ContentPage() {
         )}
 
         {publications.length === 0 ? (
-          <EmptyState emoji="📝" message="No publications found. Create content on standard.site to see it here." />
+          <EmptyState title="No publications" description="Create content on standard.site to see it here." />
         ) : (
           <VStack gap={3} align="stretch">
             {publications.map((pub) => (

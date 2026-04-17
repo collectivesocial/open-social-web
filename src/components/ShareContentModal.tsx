@@ -45,7 +45,6 @@ export function ShareContentModal({
 
     try {
       await api.post(`/api/v1/communities/${encodeURIComponent(communityDid)}/content`, {
-        userDid: '', // Will be populated by the server from session
         type: 'document',
         documentUri: publication.uri,
         documentCid: publication.cid,

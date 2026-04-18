@@ -17,7 +17,7 @@ import {
   Flex,
   Badge,
 } from '@chakra-ui/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../utils/api';
 import { Avatar } from './ui/avatar';
 import type { Publication, Membership } from '../types';
@@ -47,7 +47,10 @@ export function ShareContentModal({
   const [checking, setChecking] = useState(false);
   const [unsharing, setUnsharing] = useState<Record<string, boolean>>({});
 
-  const activeMemberships = memberships.filter((m) => m.status === 'active');
+  const activeMemberships = useMemo(
+    () => memberships.filter((m) => m.status === 'active'),
+    [memberships],
+  );
 
   const checkSharedStatus = useCallback(async () => {
     if (!publication || activeMemberships.length === 0) return;

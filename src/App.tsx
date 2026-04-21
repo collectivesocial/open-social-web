@@ -340,7 +340,19 @@ function HomePage() {
 function LoginPage({ apiUrl }: { apiUrl: string }) {
   const [handle, setHandle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  // Detect login errors returned by the backend as ?error= redirects.
+  // Initialized lazily from the URL so the message is shown on first render.
+  const [error, setError] = useState(
+    () => new URLSearchParams(window.location.search).get('error') ?? '',
+  );
+
+  useEffect(() => {
+    // Clean the ?error= param from the URL so it doesn't persist on refresh.
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('error')) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

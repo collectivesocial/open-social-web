@@ -41,10 +41,10 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     try {
       const [hierarchyData, pendingData] = await Promise.all([
         api.get<{ relationships: HierarchyRelationship[] }>(
-          `/api/v1/communities/${encodedDid}/hierarchy`,
+          `/communities/${encodedDid}/hierarchy`,
         ),
         api.get<{ requests: PendingHierarchyRequest[] }>(
-          `/api/v1/communities/${encodedDid}/hierarchy/pending`,
+          `/communities/${encodedDid}/hierarchy/pending`,
         ),
       ]);
       setRelationships(hierarchyData.relationships);
@@ -56,7 +56,7 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
       );
       if (hasChildren) {
         const contentData = await api.get<{ records: HierarchyContentRecord[] }>(
-          `/api/v1/communities/${encodedDid}/hierarchy/content`,
+          `/communities/${encodedDid}/hierarchy/content`,
         );
         setChildContent(contentData.records);
       } else {
@@ -87,8 +87,7 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     setActionLoading('invite');
     setError('');
     try {
-      await api.post(`/api/v1/communities/${encodedDid}/hierarchy/invite`, {
-        adminDid: did, // The current user is admin — the backend verifies this
+      await api.post(`/communities/${encodedDid}/hierarchy/invite`, {
         childDid: community.did,
       });
       await fetchData();
@@ -103,8 +102,7 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     setActionLoading('request');
     setError('');
     try {
-      await api.post(`/api/v1/communities/${encodedDid}/hierarchy/request`, {
-        adminDid: did,
+      await api.post(`/communities/${encodedDid}/hierarchy/request`, {
         parentDid: community.did,
       });
       await fetchData();
@@ -121,14 +119,12 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     try {
       if (request.requesterRole === 'child') {
         // Requester is a child wanting us as parent → use approve endpoint
-        await api.post(`/api/v1/communities/${encodedDid}/hierarchy/approve`, {
-          adminDid: did,
+        await api.post(`/communities/${encodedDid}/hierarchy/approve`, {
           childDid: request.requesterDid,
         });
       } else {
         // Requester is a parent wanting us as child → use accept endpoint
-        await api.post(`/api/v1/communities/${encodedDid}/hierarchy/accept`, {
-          adminDid: did,
+        await api.post(`/communities/${encodedDid}/hierarchy/accept`, {
           parentDid: request.requesterDid,
         });
       }
@@ -144,8 +140,7 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     setActionLoading(`reject-${request.id}`);
     setError('');
     try {
-      await api.post(`/api/v1/communities/${encodedDid}/hierarchy/reject`, {
-        adminDid: did,
+      await api.post(`/communities/${encodedDid}/hierarchy/reject`, {
         counterpartyDid: request.requesterDid,
       });
       await fetchData();
@@ -160,9 +155,7 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     setActionLoading(`revoke-${rel.rkey}`);
     setError('');
     try {
-      await api.del(`/api/v1/communities/${encodedDid}/hierarchy/${rel.rkey}`, {
-        adminDid: did,
-      });
+      await api.del(`/communities/${encodedDid}/hierarchy/${rel.rkey}`);
       await fetchData();
     } catch (err: any) {
       setError(err.message);

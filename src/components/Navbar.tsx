@@ -56,6 +56,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
     { label: 'Communities', to: '/' },
     { label: 'Developer Apps', to: '/apps' },
     { label: 'Content', to: '/content' },
+    { label: 'Events', to: '/events' },
   ];
 
   return (

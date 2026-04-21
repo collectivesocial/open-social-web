@@ -133,4 +133,67 @@ export interface SharedContent {
   title: string;
   path?: string;
   sharedAt: string;
+  startsAt?: string;
+  endsAt?: string;
+  location?: string;
+  mode?: 'in-person' | 'virtual' | 'hybrid';
+}
+
+export interface CalendarEvent {
+  uri: string;
+  cid: string;
+  name: string;
+  startsAt?: string;
+  endsAt?: string;
+  description?: string;
+  mode: 'in-person' | 'virtual' | 'hybrid';
+  location?: string;
+  status: string;
+}
+
+// ─── Hierarchy types ──────────────────────────────────────────────────
+
+export interface HierarchyRelationship {
+  uri: string;
+  rkey: string;
+  role: 'parent' | 'child';
+  counterpartyDid: string;
+  status: 'pending' | 'approved';
+  requestedBy: string;
+  createdAt: string;
+  displayName: string | null;
+  handle: string | null;
+  avatar: string | null;
+  description: string | null;
+}
+
+export interface PendingHierarchyRequest {
+  id: number;
+  requesterDid: string;
+  targetDid: string;
+  requesterRole: 'parent' | 'child';
+  requesterRecordRkey: string;
+  adminDid: string;
+  createdAt: string;
+  displayName: string | null;
+  handle: string | null;
+  avatar: string | null;
+  description: string | null;
+}
+
+export interface HierarchyContentRecord {
+  uri: string;
+  rkey: string;
+  sourceCommunityDid: string;
+  type: 'document' | 'event';
+  documentUri: string;
+  documentCid: string;
+  sharedBy: string;
+  title: string;
+  path?: string;
+  sharedAt: string;
+  startsAt?: string;
+  endsAt?: string;
+  location?: string;
+  mode?: 'in-person' | 'virtual' | 'hybrid';
 }

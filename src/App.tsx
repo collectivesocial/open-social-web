@@ -11,6 +11,7 @@ import { CommunityPage } from './pages/CommunityPage';
 import { CommunitySettingsPage } from './pages/CommunitySettingsPage';
 import { AppsPage } from './pages/AppsPage';
 import { ContentPage } from './pages/ContentPage';
+import { EventsPage } from './pages/EventsPage';
 import type { User, Community, Membership } from './types';
 import './App.css';
 
@@ -100,6 +101,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/apps" element={<AppsPage />} />
         <Route path="/content" element={<ContentPage />} />
+        <Route path="/events" element={<EventsPage />} />
         <Route path="/communities/:did" element={<CommunityPage />} />
         <Route path="/communities/:did/settings" element={<CommunitySettingsPage />} />
       </Routes>

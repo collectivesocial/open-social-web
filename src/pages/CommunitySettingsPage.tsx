@@ -26,7 +26,9 @@ import type {
   CollectionPermission,
   CommunityRole,
   SharedContent,
+  CalendarEvent,
 } from '../types';
+import { HierarchyTab } from '../components/HierarchyTab';
 
 const PERMISSION_LEVELS = ['member', 'admin'] as const;
 
@@ -738,6 +740,14 @@ function SharedContentTab({ did }: { did: string }) {
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'document' | 'event'>('all');
+
+  // Admin event link paste
+  const [eventLink, setEventLink] = useState('');
+  const [resolving, setResolving] = useState(false);
+  const [resolvedEvent, setResolvedEvent] = useState<CalendarEvent | null>(null);
+  const [resolveError, setResolveError] = useState('');
+  const [addingEvent, setAddingEvent] = useState(false);
 
   const fetchContent = useCallback(async () => {
     setLoading(true);
@@ -770,6 +780,86 @@ function SharedContentTab({ did }: { did: string }) {
     }
   };
 
+  const filteredRecords = typeFilter === 'all'
+    ? records
+    : records.filter((r) => r.type === typeFilter);
+
+  const eventCount = records.filter((r) => r.type === 'event').length;
+  const docCount = records.filter((r) => r.type === 'document').length;
+
+  // Parse atmo.rsvp link: https://atmo.rsvp/p/{handle}/e/{rkey}
+  const parseEventLink = (url: string): { handle: string; rkey: string } | null => {
+    try {
+      const parsed = new URL(url.trim());
+      const match = parsed.pathname.match(/^\/p\/([^/]+)\/e\/([^/]+)$/);
+      if (match) return { handle: match[1], rkey: match[2] };
+    } catch { /* not a valid URL */ }
+    return null;
+  };
+
+  const handleResolveEvent = async () => {
+    const parsed = parseEventLink(eventLink);
+    if (!parsed) {
+      setResolveError('Invalid link. Expected format: https://atmo.rsvp/p/{handle}/e/{rkey}');
+      return;
+    }
+
+    setResolving(true);
+    setResolveError('');
+    setResolvedEvent(null);
+
+    try {
+      const data = await api.get<CalendarEvent>(
+        `/api/v1/events/resolve?handle=${encodeURIComponent(parsed.handle)}&rkey=${encodeURIComponent(parsed.rkey)}`,
+      );
+      setResolvedEvent(data);
+    } catch (err) {
+      setResolveError(err instanceof Error ? err.message : 'Failed to resolve event');
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const handleAddResolvedEvent = async () => {
+    if (!resolvedEvent) return;
+
+    setAddingEvent(true);
+    try {
+      await api.post(`/api/v1/communities/${encodeURIComponent(did)}/content`, {
+        type: 'event',
+        documentUri: resolvedEvent.uri,
+        documentCid: resolvedEvent.cid,
+        title: resolvedEvent.name,
+        startsAt: resolvedEvent.startsAt,
+        endsAt: resolvedEvent.endsAt,
+        location: resolvedEvent.location,
+        mode: resolvedEvent.mode,
+      });
+      setEventLink('');
+      setResolvedEvent(null);
+      fetchContent();
+    } catch (err) {
+      setResolveError(err instanceof Error ? err.message : 'Failed to add event');
+    } finally {
+      setAddingEvent(false);
+    }
+  };
+
+  const formatDateTime = (dateStr?: string) => {
+    if (!dateStr) return null;
+    try {
+      return new Date(dateStr).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch {
+      return null;
+    }
+  };
+
   if (loading) {
     return (
       <VStack gap={3} align="stretch">
@@ -781,89 +871,209 @@ function SharedContentTab({ did }: { did: string }) {
     );
   }
 
-  if (records.length === 0) {
-    return (
-      <VStack gap={3} align="stretch">
-        <SharedContentSettings did={did} />
+  return (
+    <VStack gap={4} align="stretch">
+      <SharedContentSettings did={did} />
+
+      {/* Admin event link paste box */}
+      <Box p={4} borderWidth="1px" borderColor="border.card" borderRadius="lg" bg="bg.card">
+        <Text fontSize="sm" fontWeight="medium" mb={2}>
+          Add Event by Link
+        </Text>
+        <Text fontSize="xs" color="fg.muted" mb={3}>
+          Paste an event link (e.g., https://atmo.rsvp/p/handle/e/rkey) to add it to this community.
+        </Text>
+        <Flex gap={2}>
+          <Input
+            size="sm"
+            placeholder="https://atmo.rsvp/p/handle/e/rkey"
+            value={eventLink}
+            onChange={(e) => {
+              setEventLink(e.target.value);
+              setResolveError('');
+              setResolvedEvent(null);
+            }}
+          />
+          <Button
+            size="sm"
+            colorPalette="accent"
+            variant="outline"
+            onClick={handleResolveEvent}
+            loading={resolving}
+            disabled={!eventLink.trim()}
+            flexShrink={0}
+          >
+            Resolve
+          </Button>
+        </Flex>
+        {resolveError && (
+          <Text fontSize="xs" color="fg.error" mt={2}>{resolveError}</Text>
+        )}
+        {resolvedEvent && (
+          <Box mt={3} p={3} bg="bg.subtle" borderRadius="md">
+            <Text fontWeight="medium" fontSize="sm">{resolvedEvent.name}</Text>
+            <Flex gap={3} mt={1} align="center" flexWrap="wrap">
+              {resolvedEvent.startsAt && (
+                <Badge variant="subtle" size="sm">
+                  {formatDateTime(resolvedEvent.startsAt)}
+                </Badge>
+              )}
+              {resolvedEvent.mode && (
+                <Badge
+                  variant="subtle"
+                  size="sm"
+                  colorPalette={resolvedEvent.mode === 'in-person' ? 'green' : resolvedEvent.mode === 'virtual' ? 'blue' : 'purple'}
+                >
+                  {resolvedEvent.mode}
+                </Badge>
+              )}
+              {resolvedEvent.location && (
+                <Text fontSize="xs" color="fg.muted">{resolvedEvent.location}</Text>
+              )}
+            </Flex>
+            <Button
+              size="sm"
+              colorPalette="accent"
+              mt={3}
+              onClick={handleAddResolvedEvent}
+              loading={addingEvent}
+            >
+              Add to Community
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* Type filter */}
+      {records.length > 0 && (
+        <Flex gap={2} align="center">
+          <Button
+            size="xs"
+            variant={typeFilter === 'all' ? 'solid' : 'outline'}
+            colorPalette="accent"
+            onClick={() => setTypeFilter('all')}
+          >
+            All ({records.length})
+          </Button>
+          <Button
+            size="xs"
+            variant={typeFilter === 'document' ? 'solid' : 'outline'}
+            colorPalette="accent"
+            onClick={() => setTypeFilter('document')}
+          >
+            Documents ({docCount})
+          </Button>
+          <Button
+            size="xs"
+            variant={typeFilter === 'event' ? 'solid' : 'outline'}
+            colorPalette="accent"
+            onClick={() => setTypeFilter('event')}
+          >
+            Events ({eventCount})
+          </Button>
+        </Flex>
+      )}
+
+      {records.length === 0 ? (
         <Box py={8} textAlign="center">
           <Text color="fg.muted">No content has been shared with this community yet.</Text>
         </Box>
-      </VStack>
-    );
-  }
-
-  return (
-    <VStack gap={3} align="stretch">
-      <SharedContentSettings did={did} />
-      <Text fontSize="sm" color="fg.muted">
-        {records.length} shared item{records.length !== 1 ? 's' : ''}
-      </Text>
-      {records.map((record) => (
-        <Box
-          key={record.rkey}
-          p={4}
-          borderWidth="1px"
-          borderColor="border.card"
-          borderRadius="lg"
-          bg="bg.card"
-        >
-          <Flex justify="space-between" align="flex-start" gap={4}>
-            <Box flex={1} minW={0}>
-              <Text fontWeight="medium" fontSize="sm">
-                {record.title}
-              </Text>
-              <Flex gap={3} mt={1} align="center" flexWrap="wrap">
-                <Badge variant="subtle" size="sm">
-                  {record.type}
-                </Badge>
-                {record.path && (
-                  <Text fontSize="xs" color="fg.muted" truncate>
-                    {record.path}
-                  </Text>
-                )}
-                <Text fontSize="xs" color="fg.muted">
-                  Shared {new Date(record.sharedAt).toLocaleDateString()}
-                </Text>
-              </Flex>
-              <Text fontSize="xs" color="fg.subtle" mt={1} truncate>
-                By: {record.sharedBy}
-              </Text>
-            </Box>
-
-            <Box flexShrink={0}>
-              {confirmRemove === record.rkey ? (
-                <Flex gap={2}>
-                  <Button
-                    size="xs"
-                    colorPalette="red"
-                    variant="solid"
-                    loading={removing === record.rkey}
-                    onClick={() => handleRemove(record.rkey)}
-                  >
-                    Confirm
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => setConfirmRemove(null)}
-                  >
-                    Cancel
-                  </Button>
-                </Flex>
-              ) : (
-                <Button
-                  size="xs"
-                  colorPalette="red"
-                  variant="outline"
-                  onClick={() => setConfirmRemove(record.rkey)}
-                >
-                  Remove
-                </Button>
-              )}
-            </Box>
-          </Flex>
+      ) : filteredRecords.length === 0 ? (
+        <Box py={8} textAlign="center">
+          <Text color="fg.muted">No {typeFilter === 'event' ? 'events' : 'documents'} shared yet.</Text>
         </Box>
-      ))}
+      ) : (
+        <>
+          <Text fontSize="sm" color="fg.muted">
+            {filteredRecords.length} {typeFilter === 'all' ? 'shared item' : typeFilter}{filteredRecords.length !== 1 ? 's' : ''}
+          </Text>
+          {filteredRecords.map((record) => (
+            <Box
+              key={record.rkey}
+              p={4}
+              borderWidth="1px"
+              borderColor="border.card"
+              borderRadius="lg"
+              bg="bg.card"
+            >
+              <Flex justify="space-between" align="flex-start" gap={4}>
+                <Box flex={1} minW={0}>
+                  <Text fontWeight="medium" fontSize="sm">
+                    {record.title}
+                  </Text>
+                  <Flex gap={3} mt={1} align="center" flexWrap="wrap">
+                    <Badge variant="subtle" size="sm">
+                      {record.type}
+                    </Badge>
+                    {record.type === 'event' && record.startsAt && (
+                      <Badge variant="subtle" size="sm" colorPalette="blue">
+                        {formatDateTime(record.startsAt)}
+                      </Badge>
+                    )}
+                    {record.type === 'event' && record.mode && (
+                      <Badge
+                        variant="subtle"
+                        size="sm"
+                        colorPalette={record.mode === 'in-person' ? 'green' : record.mode === 'virtual' ? 'blue' : 'purple'}
+                      >
+                        {record.mode}
+                      </Badge>
+                    )}
+                    {record.type === 'event' && record.location && (
+                      <Text fontSize="xs" color="fg.muted" truncate>
+                        {record.location}
+                      </Text>
+                    )}
+                    {record.path && (
+                      <Text fontSize="xs" color="fg.muted" truncate>
+                        {record.path}
+                      </Text>
+                    )}
+                    <Text fontSize="xs" color="fg.muted">
+                      Shared {new Date(record.sharedAt).toLocaleDateString()}
+                    </Text>
+                  </Flex>
+                  <Text fontSize="xs" color="fg.subtle" mt={1} truncate>
+                    By: {record.sharedBy}
+                  </Text>
+                </Box>
+
+                <Box flexShrink={0}>
+                  {confirmRemove === record.rkey ? (
+                    <Flex gap={2}>
+                      <Button
+                        size="xs"
+                        colorPalette="red"
+                        variant="solid"
+                        loading={removing === record.rkey}
+                        onClick={() => handleRemove(record.rkey)}
+                      >
+                        Confirm
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setConfirmRemove(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </Flex>
+                  ) : (
+                    <Button
+                      size="xs"
+                      colorPalette="red"
+                      variant="outline"
+                      onClick={() => setConfirmRemove(record.rkey)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </Box>
+              </Flex>
+            </Box>
+          ))}
+        </>
+      )}
     </VStack>
   );
 }
@@ -973,7 +1183,7 @@ function AuditLogTab({ did }: { did: string }) {
   );
 }
 
-type TabName = 'settings' | 'apps' | 'content' | 'roles' | 'audit-log';
+type TabName = 'settings' | 'apps' | 'content' | 'roles' | 'hierarchy' | 'audit-log';
 
 export function CommunitySettingsPage() {
   const { did } = useParams<{ did: string }>();
@@ -1029,6 +1239,7 @@ export function CommunitySettingsPage() {
     { key: 'apps', label: 'Apps' },
     { key: 'content', label: 'Shared Content' },
     { key: 'roles', label: 'Roles' },
+    { key: 'hierarchy', label: 'Hierarchy' },
     ...(canViewAuditLog ? [{ key: 'audit-log' as TabName, label: 'Audit Log' }] : []),
   ];
 
@@ -1087,6 +1298,7 @@ export function CommunitySettingsPage() {
         {tab === 'apps' && <AppsTab did={did} />}
         {tab === 'content' && <SharedContentTab did={did} />}
         {tab === 'roles' && <RolesTab did={did} />}
+        {tab === 'hierarchy' && <HierarchyTab did={did} />}
         {tab === 'audit-log' && canViewAuditLog && <AuditLogTab did={did} />}
       </VStack>
     </Container>

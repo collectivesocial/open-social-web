@@ -370,19 +370,21 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
         }
       }
 
-      // Create a form to submit to the API
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `${apiUrl}/login`;
-      
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'input';
-      input.value = handle;
-      
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
+      const response = await fetch(`${apiUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: handle }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Navigate to the OAuth authorization URL
+      window.location.href = data.redirectUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
       setIsLoading(false);

@@ -1237,6 +1237,45 @@ export function CommunityPage() {
               .filter((e) => e.startsAt && new Date(e.startsAt) < now)
               .sort((a, b) => new Date(b.startsAt!).getTime() - new Date(a.startsAt!).getTime());
 
+            const contentUrl = (record: SharedContent) => {
+              if (!record.path) return null;
+              if (record.type === 'event') return `https://atmo.rsvp${record.path}`;
+              return `https://standard.site${record.path}`;
+            };
+
+            const EventCard = ({ record, dimmed }: { record: SharedContent; dimmed?: boolean }) => {
+              const href = contentUrl(record);
+              const card = (
+                <Box
+                  p={3}
+                  borderWidth="1px"
+                  borderColor="border.card"
+                  borderRadius="md"
+                  cursor={href ? 'pointer' : undefined}
+                  _hover={href ? { borderColor: 'accent.default', bg: 'bg.subtle' } : undefined}
+                  transition="all 0.15s ease"
+                  opacity={dimmed ? 0.7 : 1}
+                >
+                  <Text fontWeight="semibold" truncate mb={1}>
+                    {record.title}
+                  </Text>
+                  <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
+                    {record.startsAt && (
+                      <Text>📅 {new Date(record.startsAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+                    )}
+                    {record.location && <Text>📍 {record.location}</Text>}
+                    {record.mode && <Badge size="sm" colorPalette={dimmed ? 'gray' : 'purple'}>{record.mode}</Badge>}
+                  </Flex>
+                </Box>
+              );
+              if (!href) return card;
+              return (
+                <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  {card}
+                </a>
+              );
+            };
+
             return (
               <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
                 <Heading size="md" mb={4}>Events</Heading>
@@ -1258,26 +1297,7 @@ export function CommunityPage() {
                         </Text>
                         <VStack gap={2} align="stretch">
                           {upcoming.map((record) => (
-                            <Box
-                              key={record.uri}
-                              p={3}
-                              borderWidth="1px"
-                              borderColor="border.card"
-                              borderRadius="md"
-                              _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
-                              transition="all 0.15s ease"
-                            >
-                              <Text fontWeight="semibold" truncate mb={1}>
-                                {record.title}
-                              </Text>
-                              <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
-                                {record.startsAt && (
-                                  <Text>📅 {new Date(record.startsAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</Text>
-                                )}
-                                {record.location && <Text>📍 {record.location}</Text>}
-                                {record.mode && <Badge size="sm" colorPalette="purple">{record.mode}</Badge>}
-                              </Flex>
-                            </Box>
+                            <EventCard key={record.uri} record={record} />
                           ))}
                         </VStack>
                       </Box>
@@ -1290,25 +1310,7 @@ export function CommunityPage() {
                         </Text>
                         <VStack gap={2} align="stretch">
                           {past.map((record) => (
-                            <Box
-                              key={record.uri}
-                              p={3}
-                              borderWidth="1px"
-                              borderColor="border.card"
-                              borderRadius="md"
-                              opacity={0.7}
-                            >
-                              <Text fontWeight="semibold" truncate mb={1}>
-                                {record.title}
-                              </Text>
-                              <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
-                                {record.startsAt && (
-                                  <Text>📅 {new Date(record.startsAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</Text>
-                                )}
-                                {record.location && <Text>📍 {record.location}</Text>}
-                                {record.mode && <Badge size="sm" colorPalette="gray">{record.mode}</Badge>}
-                              </Flex>
-                            </Box>
+                            <EventCard key={record.uri} record={record} dimmed />
                           ))}
                         </VStack>
                       </Box>
@@ -1322,6 +1324,10 @@ export function CommunityPage() {
           {/* Shared Content Section (documents only) */}
           {(() => {
             const documents = sharedContent.filter((r) => r.type !== 'event');
+            const contentUrl = (record: SharedContent) => {
+              if (!record.path) return null;
+              return `https://standard.site${record.path}`;
+            };
             return (
               <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
                 <Heading size="md" mb={4}>Shared Content</Heading>
@@ -1336,24 +1342,34 @@ export function CommunityPage() {
                   </Text>
                 ) : (
                   <VStack gap={3} align="stretch">
-                    {documents.map((record) => (
-                      <Box
-                        key={record.uri}
-                        p={3}
-                        borderWidth="1px"
-                        borderColor="border.card"
-                        borderRadius="md"
-                        _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
-                        transition="all 0.15s ease"
-                      >
-                        <Text fontWeight="semibold" truncate mb={1}>
-                          {record.title}
-                        </Text>
-                        <Text fontSize="xs" color="fg.muted">
-                          Shared: {new Date(record.sharedAt).toLocaleDateString()}
-                        </Text>
-                      </Box>
-                    ))}
+                    {documents.map((record) => {
+                      const href = contentUrl(record);
+                      const card = (
+                        <Box
+                          p={3}
+                          borderWidth="1px"
+                          borderColor="border.card"
+                          borderRadius="md"
+                          cursor={href ? 'pointer' : undefined}
+                          _hover={href ? { borderColor: 'accent.default', bg: 'bg.subtle' } : undefined}
+                          transition="all 0.15s ease"
+                        >
+                          <Text fontWeight="semibold" truncate mb={1}>
+                            {record.title}
+                          </Text>
+                          <Text fontSize="xs" color="fg.muted">
+                            Shared: {new Date(record.sharedAt).toLocaleDateString()}
+                          </Text>
+                        </Box>
+                      );
+                      return href ? (
+                        <a key={record.uri} href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                          {card}
+                        </a>
+                      ) : (
+                        <Box key={record.uri}>{card}</Box>
+                      );
+                    })}
                   </VStack>
                 )}
               </Box>

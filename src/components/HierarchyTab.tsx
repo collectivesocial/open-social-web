@@ -169,6 +169,30 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
     await handleRevoke(rel);
   };
 
+  const handleResend = async (rel: HierarchyRelationship) => {
+    setActionLoading(`resend-${rel.rkey}`);
+    setError('');
+    try {
+      // Delete the old pending record
+      await api.del(`/communities/${encodedDid}/hierarchy/${rel.rkey}`);
+      // Re-create the request
+      if (rel.role === 'child') {
+        await api.post(`/communities/${encodedDid}/hierarchy/request`, {
+          parentDid: rel.counterpartyDid,
+        });
+      } else {
+        await api.post(`/communities/${encodedDid}/hierarchy/invite`, {
+          childDid: rel.counterpartyDid,
+        });
+      }
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filteredContent =
     contentFilter === 'all'
       ? childContent
@@ -320,14 +344,24 @@ export function HierarchyTab({ did }: HierarchyTabProps) {
                       </Text>
                     )}
                   </Box>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => handleCancelOutgoing(rel)}
-                    loading={actionLoading === `revoke-${rel.rkey}`}
-                  >
-                    Cancel
-                  </Button>
+                  <Flex gap={2}>
+                    <Button
+                      size="xs"
+                      colorPalette="teal"
+                      onClick={() => handleResend(rel)}
+                      loading={actionLoading === `resend-${rel.rkey}`}
+                    >
+                      Resend
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => handleCancelOutgoing(rel)}
+                      loading={actionLoading === `revoke-${rel.rkey}`}
+                    >
+                      Cancel
+                    </Button>
+                  </Flex>
                 </Flex>
               </Box>
             ))}

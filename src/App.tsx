@@ -425,7 +425,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
               <VStack gap={4} align="stretch">
                 <Box>
                   <Text fontSize="sm" fontWeight="medium" mb={1.5} color="fg.default">
-                    Your Bluesky handle
+                    Your Atmosphere account handle or DID
                   </Text>
                   <Input
                     type="text"
@@ -445,7 +445,7 @@ function LoginPage({ apiUrl }: { apiUrl: string }) {
                   size="lg"
                   width="full"
                 >
-                  {isLoading ? 'Redirecting…' : 'Log in with ATProto'}
+                  {isLoading ? 'Redirecting…' : 'Sign in with your Atmosphere account'}
                 </Button>
                 {error && (
                   <Text color="fg.error" fontSize="sm">

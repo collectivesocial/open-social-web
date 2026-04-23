@@ -20,7 +20,7 @@ import {
   Grid,
 } from '@chakra-ui/react';
 import { Avatar } from '../components/ui/avatar';
-import type { CommunityDetails, Member } from '../types';
+import type { CommunityDetails, Member, SharedContent } from '../types';
 
 interface MembersResponse {
   members: Member[];
@@ -50,6 +50,12 @@ export function CommunityPage() {
   const [membersTotal, setMembersTotal] = useState(0);
   const [membersLoading, setMembersLoading] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
+  const [membersPage, setMembersPage] = useState(0);
+  const MEMBERS_PER_PAGE = 20;
+
+  // Shared content state
+  const [sharedContent, setSharedContent] = useState<SharedContent[]>([]);
+  const [contentLoading, setContentLoading] = useState(false);
 
   // App password update state (for credential errors)
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -109,12 +115,28 @@ export function CommunityPage() {
     }
   }, [did]);
 
+  const fetchSharedContent = useCallback(async () => {
+    if (!did) return;
+    setContentLoading(true);
+    try {
+      const data = await api.get<{ records: SharedContent[] }>(
+        `/api/v1/communities/${encodeURIComponent(did)}/content`,
+      );
+      setSharedContent(data.records);
+    } catch {
+      setSharedContent([]);
+    } finally {
+      setContentLoading(false);
+    }
+  }, [did]);
+
   useEffect(() => {
     if (did) {
       fetchCommunityDetails();
       fetchMembers();
+      fetchSharedContent();
     }
-  }, [did, fetchCommunityDetails, fetchMembers]);
+  }, [did, fetchCommunityDetails, fetchMembers, fetchSharedContent]);
 
   // Handle auto-join when ?action=join is present
   const handleJoinCommunity = useCallback(async () => {
@@ -169,6 +191,7 @@ export function CommunityPage() {
 
   // Debounce member search
   useEffect(() => {
+    setMembersPage(0);
     const timeout = setTimeout(() => {
       fetchMembers(memberSearch);
     }, 300);
@@ -926,8 +949,9 @@ export function CommunityPage() {
                 {memberSearch ? 'No members found matching your search.' : 'No members yet.'}
               </Text>
             ) : (
+              <>
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
-                {members.map((member) => {
+                {members.slice(membersPage * MEMBERS_PER_PAGE, (membersPage + 1) * MEMBERS_PER_PAGE).map((member) => {
                   const bskyUrl = member.handle
                     ? `https://bsky.app/profile/${member.handle}`
                     : `https://bsky.app/profile/${member.did}`;
@@ -1171,6 +1195,81 @@ export function CommunityPage() {
                   );
                 })}
               </Grid>
+              {members.length > MEMBERS_PER_PAGE && (
+                <Flex justify="center" align="center" gap={3} mt={4}>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setMembersPage((p) => Math.max(0, p - 1))}
+                    disabled={membersPage === 0}
+                  >
+                    ← Previous
+                  </Button>
+                  <Text fontSize="sm" color="fg.muted">
+                    {membersPage + 1} of {Math.ceil(members.length / MEMBERS_PER_PAGE)}
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setMembersPage((p) => p + 1)}
+                    disabled={(membersPage + 1) * MEMBERS_PER_PAGE >= members.length}
+                  >
+                    Next →
+                  </Button>
+                </Flex>
+              )}
+              </>
+            )}
+          </Box>
+
+          {/* Shared Content Section */}
+          <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+            <Heading size="md" mb={4}>
+              Shared Content
+            </Heading>
+
+            {contentLoading ? (
+              <Center py={8}>
+                <Spinner size="md" color="accent.default" />
+              </Center>
+            ) : sharedContent.length === 0 ? (
+              <Text color="fg.muted" textAlign="center" py={4}>
+                No content has been shared with this community yet.
+              </Text>
+            ) : (
+              <VStack gap={3} align="stretch">
+                {sharedContent.map((record) => (
+                  <Box
+                    key={record.uri}
+                    p={3}
+                    borderWidth="1px"
+                    borderColor="border.card"
+                    borderRadius="md"
+                    _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
+                    transition="all 0.15s ease"
+                  >
+                    <Flex align="center" gap={2} mb={1}>
+                      <Badge size="sm" colorPalette={record.type === 'event' ? 'purple' : 'blue'}>
+                        {record.type}
+                      </Badge>
+                      <Text fontWeight="semibold" truncate>
+                        {record.title}
+                      </Text>
+                    </Flex>
+                    <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
+                      {record.startsAt && (
+                        <Text>Starts: {new Date(record.startsAt).toLocaleDateString()}</Text>
+                      )}
+                      {record.endsAt && (
+                        <Text>Ends: {new Date(record.endsAt).toLocaleDateString()}</Text>
+                      )}
+                      {record.location && <Text>Location: {record.location}</Text>}
+                      {record.mode && <Text>Mode: {record.mode}</Text>}
+                      <Text>Shared: {new Date(record.sharedAt).toLocaleDateString()}</Text>
+                    </Flex>
+                  </Box>
+                ))}
+              </VStack>
             )}
           </Box>
         </VStack>

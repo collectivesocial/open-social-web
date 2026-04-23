@@ -1222,56 +1222,143 @@ export function CommunityPage() {
             )}
           </Box>
 
-          {/* Shared Content Section */}
-          <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
-            <Heading size="md" mb={4}>
-              Shared Content
-            </Heading>
+          {/* Events Section */}
+          {(() => {
+            const now = new Date();
+            const events = sharedContent.filter((r) => r.type === 'event');
+            const upcoming = events
+              .filter((e) => !e.startsAt || new Date(e.startsAt) >= now)
+              .sort((a, b) => {
+                const aTime = a.startsAt ? new Date(a.startsAt).getTime() : Infinity;
+                const bTime = b.startsAt ? new Date(b.startsAt).getTime() : Infinity;
+                return aTime - bTime;
+              });
+            const past = events
+              .filter((e) => e.startsAt && new Date(e.startsAt) < now)
+              .sort((a, b) => new Date(b.startsAt!).getTime() - new Date(a.startsAt!).getTime());
 
-            {contentLoading ? (
-              <Center py={8}>
-                <Spinner size="md" color="accent.default" />
-              </Center>
-            ) : sharedContent.length === 0 ? (
-              <Text color="fg.muted" textAlign="center" py={4}>
-                No content has been shared with this community yet.
-              </Text>
-            ) : (
-              <VStack gap={3} align="stretch">
-                {sharedContent.map((record) => (
-                  <Box
-                    key={record.uri}
-                    p={3}
-                    borderWidth="1px"
-                    borderColor="border.card"
-                    borderRadius="md"
-                    _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
-                    transition="all 0.15s ease"
-                  >
-                    <Flex align="center" gap={2} mb={1}>
-                      <Badge size="sm" colorPalette={record.type === 'event' ? 'purple' : 'blue'}>
-                        {record.type}
-                      </Badge>
-                      <Text fontWeight="semibold" truncate>
-                        {record.title}
-                      </Text>
-                    </Flex>
-                    <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
-                      {record.startsAt && (
-                        <Text>Starts: {new Date(record.startsAt).toLocaleDateString()}</Text>
-                      )}
-                      {record.endsAt && (
-                        <Text>Ends: {new Date(record.endsAt).toLocaleDateString()}</Text>
-                      )}
-                      {record.location && <Text>Location: {record.location}</Text>}
-                      {record.mode && <Text>Mode: {record.mode}</Text>}
-                      <Text>Shared: {new Date(record.sharedAt).toLocaleDateString()}</Text>
-                    </Flex>
-                  </Box>
-                ))}
-              </VStack>
-            )}
-          </Box>
+            return (
+              <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+                <Heading size="md" mb={4}>Events</Heading>
+
+                {contentLoading ? (
+                  <Center py={8}>
+                    <Spinner size="md" color="accent.default" />
+                  </Center>
+                ) : events.length === 0 ? (
+                  <Text color="fg.muted" textAlign="center" py={4}>
+                    No events have been shared with this community yet.
+                  </Text>
+                ) : (
+                  <VStack gap={4} align="stretch">
+                    {upcoming.length > 0 && (
+                      <Box>
+                        <Text fontSize="sm" fontWeight="semibold" color="fg.muted" mb={2}>
+                          Upcoming
+                        </Text>
+                        <VStack gap={2} align="stretch">
+                          {upcoming.map((record) => (
+                            <Box
+                              key={record.uri}
+                              p={3}
+                              borderWidth="1px"
+                              borderColor="border.card"
+                              borderRadius="md"
+                              _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
+                              transition="all 0.15s ease"
+                            >
+                              <Text fontWeight="semibold" truncate mb={1}>
+                                {record.title}
+                              </Text>
+                              <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
+                                {record.startsAt && (
+                                  <Text>📅 {new Date(record.startsAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+                                )}
+                                {record.location && <Text>📍 {record.location}</Text>}
+                                {record.mode && <Badge size="sm" colorPalette="purple">{record.mode}</Badge>}
+                              </Flex>
+                            </Box>
+                          ))}
+                        </VStack>
+                      </Box>
+                    )}
+
+                    {past.length > 0 && (
+                      <Box>
+                        <Text fontSize="sm" fontWeight="semibold" color="fg.muted" mb={2}>
+                          Past
+                        </Text>
+                        <VStack gap={2} align="stretch">
+                          {past.map((record) => (
+                            <Box
+                              key={record.uri}
+                              p={3}
+                              borderWidth="1px"
+                              borderColor="border.card"
+                              borderRadius="md"
+                              opacity={0.7}
+                            >
+                              <Text fontWeight="semibold" truncate mb={1}>
+                                {record.title}
+                              </Text>
+                              <Flex gap={4} fontSize="xs" color="fg.muted" wrap="wrap">
+                                {record.startsAt && (
+                                  <Text>📅 {new Date(record.startsAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+                                )}
+                                {record.location && <Text>📍 {record.location}</Text>}
+                                {record.mode && <Badge size="sm" colorPalette="gray">{record.mode}</Badge>}
+                              </Flex>
+                            </Box>
+                          ))}
+                        </VStack>
+                      </Box>
+                    )}
+                  </VStack>
+                )}
+              </Box>
+            );
+          })()}
+
+          {/* Shared Content Section (documents only) */}
+          {(() => {
+            const documents = sharedContent.filter((r) => r.type !== 'event');
+            return (
+              <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+                <Heading size="md" mb={4}>Shared Content</Heading>
+
+                {contentLoading ? (
+                  <Center py={8}>
+                    <Spinner size="md" color="accent.default" />
+                  </Center>
+                ) : documents.length === 0 ? (
+                  <Text color="fg.muted" textAlign="center" py={4}>
+                    No content has been shared with this community yet.
+                  </Text>
+                ) : (
+                  <VStack gap={3} align="stretch">
+                    {documents.map((record) => (
+                      <Box
+                        key={record.uri}
+                        p={3}
+                        borderWidth="1px"
+                        borderColor="border.card"
+                        borderRadius="md"
+                        _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
+                        transition="all 0.15s ease"
+                      >
+                        <Text fontWeight="semibold" truncate mb={1}>
+                          {record.title}
+                        </Text>
+                        <Text fontSize="xs" color="fg.muted">
+                          Shared: {new Date(record.sharedAt).toLocaleDateString()}
+                        </Text>
+                      </Box>
+                    ))}
+                  </VStack>
+                )}
+              </Box>
+            );
+          })()}
         </VStack>
       </Container>
     </Box>

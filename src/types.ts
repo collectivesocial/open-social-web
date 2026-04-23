@@ -137,6 +137,8 @@ export interface SharedContent {
   endsAt?: string;
   location?: string;
   mode?: 'in-person' | 'virtual' | 'hybrid';
+  authorHandle?: string;
+  eventUrl?: string;
 }
 
 export interface CalendarEvent {
@@ -149,6 +151,7 @@ export interface CalendarEvent {
   mode: 'in-person' | 'virtual' | 'hybrid';
   location?: string;
   status: string;
+  eventUrl?: string;
 }
 
 // ─── Hierarchy types ──────────────────────────────────────────────────

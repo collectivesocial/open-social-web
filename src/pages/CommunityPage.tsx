@@ -20,7 +20,7 @@ import {
   Grid,
 } from '@chakra-ui/react';
 import { Avatar } from '../components/ui/avatar';
-import type { CommunityDetails, Member, SharedContent } from '../types';
+import type { CommunityDetails, Member, SharedContent, HierarchyRelationship } from '../types';
 
 interface MembersResponse {
   members: Member[];
@@ -56,6 +56,10 @@ export function CommunityPage() {
   // Shared content state
   const [sharedContent, setSharedContent] = useState<SharedContent[]>([]);
   const [contentLoading, setContentLoading] = useState(false);
+
+  // Hierarchy state
+  const [hierarchyRelationships, setHierarchyRelationships] = useState<HierarchyRelationship[]>([]);
+  const [hierarchyLoading, setHierarchyLoading] = useState(false);
 
   // App password update state (for credential errors)
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -130,13 +134,31 @@ export function CommunityPage() {
     }
   }, [did]);
 
+  const fetchHierarchy = useCallback(async () => {
+    if (!did) return;
+    setHierarchyLoading(true);
+    try {
+      const data = await api.get<{ relationships: HierarchyRelationship[] }>(
+        `/communities/${encodeURIComponent(did)}/hierarchy`,
+      );
+      setHierarchyRelationships(
+        data.relationships.filter((r) => r.status === 'approved'),
+      );
+    } catch {
+      setHierarchyRelationships([]);
+    } finally {
+      setHierarchyLoading(false);
+    }
+  }, [did]);
+
   useEffect(() => {
     if (did) {
       fetchCommunityDetails();
       fetchMembers();
       fetchSharedContent();
+      fetchHierarchy();
     }
-  }, [did, fetchCommunityDetails, fetchMembers, fetchSharedContent]);
+  }, [did, fetchCommunityDetails, fetchMembers, fetchSharedContent, fetchHierarchy]);
 
   // Handle auto-join when ?action=join is present
   const handleJoinCommunity = useCallback(async () => {
@@ -924,6 +946,102 @@ export function CommunityPage() {
             </Box>
           )}
 
+          {/* Hierarchy Section — Parent & Subcommunities */}
+          {(() => {
+            const parentCommunities = hierarchyRelationships.filter((r) => r.role === 'child');
+            const subCommunities = hierarchyRelationships.filter((r) => r.role === 'parent');
+
+            if (hierarchyLoading || (parentCommunities.length === 0 && subCommunities.length === 0)) return null;
+
+            return (
+              <>
+                {parentCommunities.length > 0 && (
+                  <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+                    <Heading size="md" mb={3}>Parent Communities</Heading>
+                    <VStack gap={2} align="stretch">
+                      {parentCommunities.map((rel) => (
+                        <a
+                          key={rel.rkey}
+                          href={`/communities/${encodeURIComponent(rel.counterpartyDid)}`}
+                          style={{ textDecoration: 'none' }}
+                        >
+                          <Flex
+                            align="center"
+                            gap={3}
+                            p={3}
+                            borderWidth="1px"
+                            borderColor="border.card"
+                            borderRadius="md"
+                            cursor="pointer"
+                            _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
+                            transition="all 0.15s ease"
+                          >
+                            {rel.avatar && (
+                              <Box w="36px" h="36px" borderRadius="full" overflow="hidden" flexShrink={0}>
+                                <img src={rel.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </Box>
+                            )}
+                            <Box flex={1} minW={0}>
+                              <Text fontWeight="semibold" truncate>
+                                {rel.displayName || rel.counterpartyDid}
+                              </Text>
+                              {rel.handle && (
+                                <Text fontSize="xs" color="fg.muted">@{rel.handle}</Text>
+                              )}
+                            </Box>
+                            <Badge size="sm" colorPalette="teal">Parent</Badge>
+                          </Flex>
+                        </a>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
+
+                {subCommunities.length > 0 && (
+                  <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
+                    <Heading size="md" mb={3}>Subcommunities</Heading>
+                    <VStack gap={2} align="stretch">
+                      {subCommunities.map((rel) => (
+                        <a
+                          key={rel.rkey}
+                          href={`/communities/${encodeURIComponent(rel.counterpartyDid)}`}
+                          style={{ textDecoration: 'none' }}
+                        >
+                          <Flex
+                            align="center"
+                            gap={3}
+                            p={3}
+                            borderWidth="1px"
+                            borderColor="border.card"
+                            borderRadius="md"
+                            cursor="pointer"
+                            _hover={{ borderColor: 'accent.default', bg: 'bg.subtle' }}
+                            transition="all 0.15s ease"
+                          >
+                            {rel.avatar && (
+                              <Box w="36px" h="36px" borderRadius="full" overflow="hidden" flexShrink={0}>
+                                <img src={rel.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </Box>
+                            )}
+                            <Box flex={1} minW={0}>
+                              <Text fontWeight="semibold" truncate>
+                                {rel.displayName || rel.counterpartyDid}
+                              </Text>
+                              {rel.handle && (
+                                <Text fontSize="xs" color="fg.muted">@{rel.handle}</Text>
+                              )}
+                            </Box>
+                            <Badge size="sm" colorPalette="purple">Subcommunity</Badge>
+                          </Flex>
+                        </a>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
+              </>
+            );
+          })()}
+
           {/* Members Section */}
           <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">
             <Flex justify="space-between" align="center" mb={4}>
@@ -1238,9 +1356,29 @@ export function CommunityPage() {
               .sort((a, b) => new Date(b.startsAt!).getTime() - new Date(a.startsAt!).getTime());
 
             const contentUrl = (record: SharedContent) => {
-              if (!record.path) return null;
-              if (record.type === 'event') return `https://atmo.rsvp${record.path}`;
-              return `https://standard.site${record.path}`;
+              if (record.type === 'event') {
+                // If path is a full URL (e.g. OpenMeet), use it directly
+                if (record.path?.startsWith('http')) return record.path;
+                // atmo.rsvp path (e.g. /p/handle/e/rkey)
+                if (record.path) return `https://atmo.rsvp${record.path}`;
+                // Fallback: eventUrl from the resolved record
+                if (record.eventUrl) return record.eventUrl;
+                // Last resort: build from documentUri
+                if (record.documentUri) {
+                  const parts = record.documentUri.replace('at://', '').split('/');
+                  if (parts.length >= 3) {
+                    const rkey = parts[parts.length - 1];
+                    const handle = record.authorHandle || parts[0];
+                    return `https://atmo.rsvp/p/${handle}/e/${rkey}`;
+                  }
+                }
+                return null;
+              }
+              // Documents: use author handle as domain (standard.site pattern)
+              if (record.path && record.authorHandle) {
+                return `https://${record.authorHandle}${record.path}`;
+              }
+              return null;
             };
 
             const EventCard = ({ record, dimmed }: { record: SharedContent; dimmed?: boolean }) => {
@@ -1325,8 +1463,10 @@ export function CommunityPage() {
           {(() => {
             const documents = sharedContent.filter((r) => r.type !== 'event');
             const contentUrl = (record: SharedContent) => {
-              if (!record.path) return null;
-              return `https://standard.site${record.path}`;
+              if (record.path && record.authorHandle) {
+                return `https://${record.authorHandle}${record.path}`;
+              }
+              return null;
             };
             return (
               <Box bg="bg.card" borderRadius="xl" p={6} shadow="sm" borderWidth="1px" borderColor="border.card">

@@ -787,10 +787,21 @@ function SharedContentTab({ did }: { did: string }) {
   const eventCount = records.filter((r) => r.type === 'event').length;
   const docCount = records.filter((r) => r.type === 'document').length;
 
-  // Parse atmo.rsvp link: https://atmo.rsvp/p/{handle}/e/{rkey}
+  // Parse event link: supports atmo.rsvp URLs and AT URIs
   const parseEventLink = (url: string): { handle: string; rkey: string } | null => {
+    const trimmed = url.trim();
+
+    // AT URI: at://did:plc:xxx/community.lexicon.calendar.event/rkey
+    if (trimmed.startsWith('at://')) {
+      const parts = trimmed.replace('at://', '').split('/');
+      if (parts.length >= 3 && parts[1] === 'community.lexicon.calendar.event') {
+        return { handle: parts[0], rkey: parts[2] };
+      }
+    }
+
+    // atmo.rsvp URL: https://atmo.rsvp/p/{handle}/e/{rkey}
     try {
-      const parsed = new URL(url.trim());
+      const parsed = new URL(trimmed);
       const match = parsed.pathname.match(/^\/p\/([^/]+)\/e\/([^/]+)$/);
       if (match) return { handle: match[1], rkey: match[2] };
     } catch { /* not a valid URL */ }
@@ -800,7 +811,7 @@ function SharedContentTab({ did }: { did: string }) {
   const handleResolveEvent = async () => {
     const parsed = parseEventLink(eventLink);
     if (!parsed) {
-      setResolveError('Invalid link. Expected format: https://atmo.rsvp/p/{handle}/e/{rkey}');
+      setResolveError('Invalid link. Supported formats: https://atmo.rsvp/p/{handle}/e/{rkey} or at://did/community.lexicon.calendar.event/{rkey}');
       return;
     }
 
@@ -825,11 +836,22 @@ function SharedContentTab({ did }: { did: string }) {
 
     setAddingEvent(true);
     try {
+      // Build the event path/URL:
+      // 1. atmo.rsvp link → use the path portion
+      // 2. Lexicon event with eventUrl → store the full external URL
+      const parsed = parseEventLink(eventLink);
+      let eventPath: string | undefined;
+      if (parsed && !eventLink.trim().startsWith('at://')) {
+        // atmo.rsvp link — store the path
+        eventPath = `/p/${parsed.handle}/e/${parsed.rkey}`;
+      }
+
       await api.post(`/api/v1/communities/${encodeURIComponent(did)}/content`, {
         type: 'event',
         documentUri: resolvedEvent.uri,
         documentCid: resolvedEvent.cid,
         title: resolvedEvent.name,
+        path: eventPath || resolvedEvent.eventUrl,
         startsAt: resolvedEvent.startsAt,
         endsAt: resolvedEvent.endsAt,
         location: resolvedEvent.location,
@@ -881,12 +903,12 @@ function SharedContentTab({ did }: { did: string }) {
           Add Event by Link
         </Text>
         <Text fontSize="xs" color="fg.muted" mb={3}>
-          Paste an event link (e.g., https://atmo.rsvp/p/handle/e/rkey) to add it to this community.
+          Paste an event link or AT URI to add it to this community.
         </Text>
         <Flex gap={2}>
           <Input
             size="sm"
-            placeholder="https://atmo.rsvp/p/handle/e/rkey"
+            placeholder="https://atmo.rsvp/p/handle/e/rkey or at://did/community.lexicon.calendar.event/rkey"
             value={eventLink}
             onChange={(e) => {
               setEventLink(e.target.value);

@@ -9,6 +9,12 @@ import {
   DialogCloseTrigger,
 } from './ui/dialog';
 import {
+  RadioGroupRoot,
+  RadioGroupItem,
+  RadioGroupItemControl,
+  RadioGroupItemText,
+} from './ui/radio-group';
+import {
   Box,
   Button,
   Input,
@@ -22,6 +28,9 @@ import {
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { api } from '../utils/api';
+import { CopyableCode } from './CopyableCode';
+
+type AuthMethod = 'api_key' | 'http_signature' | 'both';
 
 interface OpenChangeDetails {
   open: boolean;
@@ -48,9 +57,21 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{
-    app: { app_id: string; name: string; domain: string; api_key: string };
+    app: {
+      app_id: string;
+      name: string;
+      domain: string;
+      api_key?: string;
+      auth_method?: AuthMethod;
+      cimd_url?: string | null;
+    };
   } | null>(null);
-  const [copiedKey, setCopiedKey] = useState(false);
+
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('api_key');
+  const [cimdUrl, setCimdUrl] = useState('');
+  const [cimdUrlError, setCimdUrlError] = useState('');
+
+  // copiedKey / copyKey: CopyableCode handles clipboard state internally
 
   // Default permissions / lexicons
   const [permissions, setPermissions] = useState<DefaultPermission[]>([]);
@@ -109,16 +130,34 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
 
   const handleSubmit = async () => {
     setError('');
+    setCimdUrlError('');
+
+    const needsCimd = authMethod === 'http_signature' || authMethod === 'both';
+    if (needsCimd && cimdUrl && !cimdUrl.startsWith('https://')) {
+      setCimdUrlError('CIMD URL must start with https://');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const body: any = { name, domain };
+      const body: any = { name, domain, authMethod };
       if (permissions.length > 0) {
         body.defaultPermissions = permissions;
       }
+      if (needsCimd && cimdUrl.trim()) {
+        body.cimdUrl = cimdUrl.trim();
+      }
 
       const data = await api.post<{
-        app: { app_id: string; name: string; domain: string; api_key: string };
+        app: {
+          app_id: string;
+          name: string;
+          domain: string;
+          api_key?: string;
+          auth_method?: AuthMethod;
+          cimd_url?: string | null;
+        };
       }>('/api/v1/apps/register', body);
 
       setResult(data);
@@ -135,7 +174,9 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
     setDomain('');
     setError('');
     setResult(null);
-    setCopiedKey(false);
+    setAuthMethod('api_key');
+    setCimdUrl('');
+    setCimdUrlError('');
     setPermissions([]);
     setNewCollection('');
     setCollectionError('');
@@ -144,12 +185,6 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
   const handleClose = () => {
     setOpen(false);
     resetForm();
-  };
-
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
   };
 
   const domainPrefix = domain
@@ -185,33 +220,29 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                 <Text fontWeight="bold" color="green.700" mb={2}>
                   ✅ App "{result.app.name}" registered successfully
                 </Text>
-                <Text fontSize="sm" color="green.600">
-                  Save your API key below — treat it like a password.
-                </Text>
+                {result.app.auth_method === 'http_signature' ? (
+                  <Text fontSize="sm" color="green.600">
+                    CIMD setup pending — visit your app's detail card to complete configuration.
+                  </Text>
+                ) : (
+                  <Text fontSize="sm" color="green.600">
+                    Save your API key below — treat it like a password.
+                  </Text>
+                )}
               </Box>
 
               <Box>
-                <Text fontWeight="medium" mb={1} fontSize="sm">App ID</Text>
-                <Code p={2} borderRadius="md" display="block" fontSize="sm">
-                  {result.app.app_id}
-                </Code>
+                <CopyableCode value={result.app.app_id} label="App ID" />
               </Box>
 
-              <Box>
-                <Flex justify="space-between" align="center" mb={1}>
-                  <Text fontWeight="medium" fontSize="sm">API Key</Text>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => copyToClipboard(result.app.api_key)}
-                  >
-                    {copiedKey ? '✓ Copied' : 'Copy'}
-                  </Button>
-                </Flex>
-                <Code p={2} borderRadius="md" display="block" fontSize="xs" wordBreak="break-all">
-                  {result.app.api_key}
-                </Code>
-              </Box>
+              {result.app.api_key && result.app.auth_method !== 'http_signature' && (
+                <Box>
+                  <CopyableCode
+                    value={result.app.api_key}
+                    label="API Key"
+                  />
+                </Box>
+              )}
             </VStack>
           ) : (
             <VStack gap={4} align="stretch">
@@ -236,6 +267,53 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                 <Text fontSize="xs" color="fg.subtle" mt={1}>
                   The domain where your app will run. Lexicon collections must match this domain.
                 </Text>
+              </Box>
+
+              <Box>
+                <Text fontWeight="medium" mb={2} fontSize="sm">Auth Method</Text>
+                <RadioGroupRoot
+                  value={authMethod}
+                  onValueChange={(e) => {
+                    setAuthMethod(e.value as AuthMethod);
+                    setCimdUrlError('');
+                  }}
+                  disabled={loading}
+                >
+                  <VStack gap={2} align="stretch">
+                    {([
+                      ['api_key', 'API Key'],
+                      ['http_signature', 'HTTP Signature (CIMD)'],
+                      ['both', 'Both'],
+                    ] as const).map(([value, label]) => (
+                      <RadioGroupItem key={value} value={value}>
+                        <RadioGroupItemControl />
+                        <RadioGroupItemText fontSize="sm">{label}</RadioGroupItemText>
+                      </RadioGroupItem>
+                    ))}
+                  </VStack>
+                </RadioGroupRoot>
+
+                {(authMethod === 'http_signature' || authMethod === 'both') && (
+                  <Box mt={3}>
+                    <Text fontWeight="medium" mb={1} fontSize="sm">CIMD URL</Text>
+                    <Input
+                      value={cimdUrl}
+                      onChange={(e) => {
+                        setCimdUrl(e.target.value);
+                        setCimdUrlError('');
+                      }}
+                      placeholder={`https://${domain || 'myapp.example.com'}/.well-known/jwks.json`}
+                      disabled={loading}
+                      type="url"
+                    />
+                    <Text fontSize="xs" color="fg.subtle" mt={1}>
+                      HTTPS URL hosting your JWKS public key document. Must share a domain with your app.
+                    </Text>
+                    {cimdUrlError && (
+                      <Text fontSize="xs" color="fg.error" mt={1}>{cimdUrlError}</Text>
+                    )}
+                  </Box>
+                )}
               </Box>
 
               {/* Default Collection Permissions / Lexicons */}

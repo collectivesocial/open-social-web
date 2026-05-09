@@ -74,10 +74,6 @@ describe('CimdSetupSection', () => {
     });
   });
 
-  it('renders "Saved" badge and CIMD URL when cimd_url is set', () => {
-    renderSection('https://test.example.com/.well-known/jwks.json');
-    expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
-  });
 
   it('after a successful Save calls onUpdated and closes the setup panel', async () => {
     fetchSpy.mockResolvedValueOnce({
@@ -106,15 +102,21 @@ describe('CimdSetupSection', () => {
     // onUpdated is called to trigger parent re-fetch
     await waitFor(() => expect(onUpdated).toHaveBeenCalledOnce());
 
-    // NOTE: The success copy "✓ Saved. CIMD will activate on the first signed request."
-    // is rendered inside the setup panel. React 18 batches setSaveSuccess(true) and
-    // setShowSetup(false) in a single render, so the panel closes before the success
-    // text ever reaches the DOM. The component relies on the parent calling onUpdated()
-    // to re-fetch and flip isConfigured=true, which shows the "Saved" badge.
     // The setup panel closes after save, confirming the operation completed.
+    // Success is signalled by the parent re-fetching and rendering the "Saved" badge
+    // (see test below — "Saved badge persists when cimd_url is set").
     await waitFor(() => {
       expect(screen.queryByPlaceholderText(/jwks\.json/i)).not.toBeInTheDocument();
     });
+  });
+
+  it('"Saved" badge is visible when component is rendered with cimd_url set (persistent success indicator)', () => {
+    // Simulates the state after onUpdated() triggers parent re-fetch and passes
+    // cimd_url down — the "Saved" badge is the durable success signal (Option B fix).
+    renderSection('https://test.example.com/.well-known/jwks.json');
+    expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
+    // The URL itself is also shown, reinforcing the success state
+    expect(screen.getByText('https://test.example.com/.well-known/jwks.json')).toBeInTheDocument();
   });
 
   it('shows an error when Save is attempted with a non-https URL', async () => {

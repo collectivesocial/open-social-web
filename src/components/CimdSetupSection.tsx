@@ -57,14 +57,12 @@ export function CimdSetupSection({ app, onUpdated }: CimdSetupSectionProps) {
   const [cimdUrlInput, setCimdUrlInput] = useState(app.cimd_url ?? '');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [showTroubleshooting, setShowTroubleshooting] = useState(false);
 
   const validateHttps = (url: string) => url.startsWith('https://');
 
   const handleSave = async () => {
     setSaveError('');
-    setSaveSuccess(false);
 
     if (!validateHttps(cimdUrlInput)) {
       setSaveError('CIMD URL must start with https://');
@@ -76,7 +74,6 @@ export function CimdSetupSection({ app, onUpdated }: CimdSetupSectionProps) {
       // ⚠️ BLOCKER: PUT /api/v1/apps/:appId not yet confirmed by Wash.
       // Optimistically calling; update if endpoint path differs.
       await api.put(`/api/v1/apps/${app.app_id}`, { cimdUrl: cimdUrlInput });
-      setSaveSuccess(true);
       setShowSetup(false);
       onUpdated();
     } catch (err) {
@@ -102,7 +99,6 @@ export function CimdSetupSection({ app, onUpdated }: CimdSetupSectionProps) {
             onClick={() => {
               setCimdUrlInput(app.cimd_url ?? '');
               setSaveError('');
-              setSaveSuccess(false);
               setShowSetup(true);
             }}
           >
@@ -204,7 +200,6 @@ export function CimdSetupSection({ app, onUpdated }: CimdSetupSectionProps) {
                 onChange={(e) => {
                   setCimdUrlInput(e.target.value);
                   setSaveError('');
-                  setSaveSuccess(false);
                 }}
                 placeholder={`https://${app.domain}/.well-known/jwks.json`}
                 size="sm"
@@ -224,11 +219,6 @@ export function CimdSetupSection({ app, onUpdated }: CimdSetupSectionProps) {
             </HStack>
             {saveError && (
               <Text color="fg.error" fontSize="xs" mt={1}>{saveError}</Text>
-            )}
-            {saveSuccess && (
-              <Text color="fg.success" fontSize="xs" mt={1}>
-                ✓ Saved. CIMD will activate on the first signed request.
-              </Text>
             )}
           </Box>
 

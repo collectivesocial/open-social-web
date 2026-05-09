@@ -19,6 +19,8 @@ import {
 } from '@chakra-ui/react';
 import { RegisterAppModal } from '../components/RegisterAppModal';
 import { EmptyState } from '../components/EmptyState';
+import { CimdSetupSection } from '../components/CimdSetupSection';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { api, API_BASE } from '../utils/api';
 import type { AppInfo, AppDefaultPermission } from '../types';
 
@@ -219,19 +221,17 @@ function AppCard({
   app,
   onRotateKey,
   onDeactivate,
+  onUpdated,
 }: {
   app: AppInfo;
   onRotateKey: (appId: string) => void;
   onDeactivate: (appId: string) => void;
+  onUpdated: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
-  const copyKey = async () => {
-    if (app.api_key) {
-      await navigator.clipboard.writeText(app.api_key);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const copyKey = () => {
+    if (app.api_key) copy(app.api_key);
   };
 
   return (
@@ -295,6 +295,10 @@ function AppCard({
             Deactivate
           </Button>
         </Flex>
+      )}
+
+      {app.status === 'active' && (
+        <CimdSetupSection app={app} onUpdated={onUpdated} />
       )}
 
       {app.status === 'active' && <AppDefaultPermissionsSection app={app} />}
@@ -423,6 +427,7 @@ export function AppsPage() {
                 app={app}
                 onRotateKey={handleRotateKey}
                 onDeactivate={handleDeactivate}
+                onUpdated={fetchApps}
               />
             ))}
           </Grid>

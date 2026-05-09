@@ -46,6 +46,8 @@ export interface AppInfo {
   name: string;
   domain: string;
   api_key?: string;
+  auth_method?: 'api_key' | 'http_signature' | 'both';
+  cimd_url?: string | null;
   status: string;
   created_at: string;
   updated_at: string;

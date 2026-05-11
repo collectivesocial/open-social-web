@@ -8,6 +8,11 @@ export interface User {
   description?: string;
 }
 
+export interface CommunityLink {
+  name: string;
+  url: string;
+}
+
 export interface Community {
   did: string;
   displayName: string;
@@ -15,6 +20,7 @@ export interface Community {
   avatar?: string;
   banner?: string;
   type?: 'open' | 'admin-approved' | 'private';
+  links?: CommunityLink[];
 }
 
 export interface CommunityDetails {
@@ -141,6 +147,13 @@ export interface SharedContent {
   mode?: 'in-person' | 'virtual' | 'hybrid';
   authorHandle?: string;
   eventUrl?: string;
+  /**
+   * True when this entry was synthesized from a native
+   * `community.lexicon.calendar.event` record in the community's PDS rather
+   * than from a `community.opensocial.sharedContent` wrapper record. Native
+   * entries cannot be removed via the shared-content delete endpoint.
+   */
+  isNative?: boolean;
 }
 
 export interface CalendarEvent {

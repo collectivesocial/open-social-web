@@ -27,6 +27,7 @@ import type {
   CommunityRole,
   SharedContent,
   CalendarEvent,
+  CommunityLink,
 } from '../types';
 import { HierarchyTab } from '../components/HierarchyTab';
 
@@ -132,6 +133,215 @@ function SettingsTab({ did }: { did: string }) {
           {saving ? 'Saving…' : 'Save Settings'}
         </Button>
       </Flex>
+    </VStack>
+  );
+}
+
+// ─── Tab: Links ───────────────────────────────────────────────────────
+
+interface CommunityDetailsResponse {
+  community: {
+    links?: CommunityLink[];
+  };
+}
+
+function LinksTab({ did }: { did: string }) {
+  const [links, setLinks] = useState<CommunityLink[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const fetchLinks = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.get<CommunityDetailsResponse>(
+        `/communities/${encodeURIComponent(did)}`,
+      );
+      setLinks(data.community?.links ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load links');
+    } finally {
+      setLoading(false);
+    }
+  }, [did]);
+
+  useEffect(() => { fetchLinks(); }, [fetchLinks]);
+
+  const updateLink = (idx: number, patch: Partial<CommunityLink>) => {
+    setLinks((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+    setSuccessMessage('');
+  };
+
+  const addLink = () => {
+    if (links.length >= 16) return;
+    setLinks((prev) => [...prev, { name: '', url: '' }]);
+    setSuccessMessage('');
+  };
+
+  const removeLink = (idx: number) => {
+    setLinks((prev) => prev.filter((_, i) => i !== idx));
+    setSuccessMessage('');
+  };
+
+  const moveLink = (idx: number, direction: -1 | 1) => {
+    setLinks((prev) => {
+      const next = [...prev];
+      const target = idx + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+    setSuccessMessage('');
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setError('');
+    setSuccessMessage('');
+    // Trim before validating so trailing spaces don't break the URL check.
+    const cleaned = links.map((l) => ({ name: l.name.trim(), url: l.url.trim() }));
+    for (const [i, l] of cleaned.entries()) {
+      if (!l.name) {
+        setError(`Link ${i + 1}: name is required.`);
+        setSaving(false);
+        return;
+      }
+      if (!l.url) {
+        setError(`Link ${i + 1}: URL is required.`);
+        setSaving(false);
+        return;
+      }
+      try {
+        const parsed = new URL(l.url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          throw new Error('Protocol must be http or https');
+        }
+      } catch {
+        setError(`Link ${i + 1}: "${l.url}" is not a valid http(s) URL.`);
+        setSaving(false);
+        return;
+      }
+    }
+    try {
+      await api.put(`/communities/${encodeURIComponent(did)}/links`, {
+        links: cleaned,
+      });
+      setLinks(cleaned);
+      setSuccessMessage('Links saved.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save links');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <Center py={8}><Spinner size="lg" color="accent.default" /></Center>;
+  }
+
+  return (
+    <VStack gap={5} align="stretch">
+      <Box bg="bg.card" borderRadius="xl" shadow="sm" p={5} borderWidth="1px" borderColor="border.card">
+        <Heading size="sm" mb={2}>Community Links</Heading>
+        <Text fontSize="sm" color="fg.muted" mb={4}>
+          Add up to 16 external links (website, Discord, docs, etc.) that will
+          appear near the top of the community page. URLs must start with{' '}
+          <Code fontSize="xs">http://</Code> or <Code fontSize="xs">https://</Code>.
+        </Text>
+
+        {links.length === 0 ? (
+          <Text fontSize="sm" color="fg.subtle" mb={4}>
+            No links yet. Add one below.
+          </Text>
+        ) : (
+          <VStack gap={3} align="stretch" mb={4}>
+            {links.map((link, idx) => (
+              <Box
+                key={idx}
+                borderWidth="1px"
+                borderColor="border.subtle"
+                borderRadius="md"
+                p={3}
+                bg="bg.subtle"
+              >
+                <Grid templateColumns={{ base: '1fr', md: '1fr 2fr auto' }} gap={3} alignItems="center">
+                  <Box>
+                    <Text fontSize="xs" color="fg.muted" mb={1}>Name</Text>
+                    <Input
+                      size="sm"
+                      value={link.name}
+                      onChange={(e) => updateLink(idx, { name: e.target.value })}
+                      placeholder="e.g. Overcommitted Website"
+                      maxLength={64}
+                    />
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="fg.muted" mb={1}>URL</Text>
+                    <Input
+                      size="sm"
+                      value={link.url}
+                      onChange={(e) => updateLink(idx, { url: e.target.value })}
+                      placeholder="https://overcommitted.dev"
+                      maxLength={1024}
+                    />
+                  </Box>
+                  <HStack gap={1} justifySelf={{ base: 'flex-start', md: 'flex-end' }}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => moveLink(idx, -1)}
+                      disabled={idx === 0}
+                      aria-label="Move up"
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => moveLink(idx, 1)}
+                      disabled={idx === links.length - 1}
+                      aria-label="Move down"
+                    >
+                      ↓
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      colorPalette="red"
+                      onClick={() => removeLink(idx)}
+                    >
+                      Remove
+                    </Button>
+                  </HStack>
+                </Grid>
+              </Box>
+            ))}
+          </VStack>
+        )}
+
+        <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            colorPalette="accent"
+            onClick={addLink}
+            disabled={links.length >= 16}
+          >
+            + Add Link
+          </Button>
+          <HStack gap={3}>
+            {error && <Text fontSize="sm" color="fg.error">{error}</Text>}
+            {!error && successMessage && (
+              <Text fontSize="sm" color="green.600">{successMessage}</Text>
+            )}
+            <Button onClick={save} disabled={saving} colorPalette="orange" size="sm">
+              {saving ? 'Saving…' : 'Save Links'}
+            </Button>
+          </HStack>
+        </Flex>
+      </Box>
     </VStack>
   );
 }
@@ -1027,6 +1237,11 @@ function SharedContentTab({ did }: { did: string }) {
                     <Badge variant="subtle" size="sm">
                       {record.type}
                     </Badge>
+                    {record.isNative && (
+                      <Badge variant="subtle" size="sm" colorPalette="teal">
+                        Community event
+                      </Badge>
+                    )}
                     {record.type === 'event' && record.startsAt && (
                       <Badge variant="subtle" size="sm" colorPalette="blue">
                         {formatDateTime(record.startsAt)}
@@ -1061,7 +1276,11 @@ function SharedContentTab({ did }: { did: string }) {
                 </Box>
 
                 <Box flexShrink={0}>
-                  {confirmRemove === record.rkey ? (
+                  {record.isNative ? (
+                    <Text fontSize="xs" color="fg.subtle">
+                      Owned by community
+                    </Text>
+                  ) : confirmRemove === record.rkey ? (
                     <Flex gap={2}>
                       <Button
                         size="xs"
@@ -1205,7 +1424,7 @@ function AuditLogTab({ did }: { did: string }) {
   );
 }
 
-type TabName = 'settings' | 'apps' | 'content' | 'roles' | 'hierarchy' | 'audit-log';
+type TabName = 'settings' | 'links' | 'apps' | 'content' | 'roles' | 'hierarchy' | 'audit-log';
 
 export function CommunitySettingsPage() {
   const { did } = useParams<{ did: string }>();
@@ -1258,6 +1477,7 @@ export function CommunitySettingsPage() {
 
   const tabs: { key: TabName; label: string }[] = [
     { key: 'settings', label: 'Settings' },
+    { key: 'links', label: 'Links' },
     { key: 'apps', label: 'Apps' },
     { key: 'content', label: 'Shared Content' },
     { key: 'roles', label: 'Roles' },
@@ -1317,6 +1537,7 @@ export function CommunitySettingsPage() {
 
         {/* Tab content */}
         {tab === 'settings' && <SettingsTab did={did} />}
+        {tab === 'links' && <LinksTab did={did} />}
         {tab === 'apps' && <AppsTab did={did} />}
         {tab === 'content' && <SharedContentTab did={did} />}
         {tab === 'roles' && <RolesTab did={did} />}

@@ -45,6 +45,15 @@ export function CommunityPage() {
   const [joining, setJoining] = useState(false);
   const [joinStatus, setJoinStatus] = useState<string | null>(null);
 
+  // Leave state
+  const [leaving, setLeaving] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
+
+  // Share state
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareError, setShareError] = useState('');
+
   // Member list state
   const [members, setMembers] = useState<Member[]>([]);
   const [membersTotal, setMembersTotal] = useState(0);
@@ -210,6 +219,73 @@ export function CommunityPage() {
       handleJoinCommunity();
     }
   }, [action, details, joining, joinStatus, handleJoinCommunity]);
+
+  // Leave community handler
+  const handleLeaveCommunity = useCallback(async () => {
+    if (!did || leaving) return;
+    setLeaving(true);
+    setLeaveError('');
+    try {
+      const response = await fetch(`${API_BASE}/communities/${encodeURIComponent(did)}/leave`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { ...csrfHeaders() },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 409 && data.error === 'sole_admin') {
+          setLeaveError(
+            data.details ||
+              'You are the only admin. Promote another member to admin before leaving.',
+          );
+        } else {
+          setLeaveError(data.error || data.details || 'Failed to leave community.');
+        }
+        return;
+      }
+      // Successful leave — refresh state. The non-member view will render.
+      setShowLeaveConfirm(false);
+      await fetchCommunityDetails();
+    } catch (err) {
+      setLeaveError(err instanceof Error ? err.message : 'Failed to leave community');
+    } finally {
+      setLeaving(false);
+    }
+  }, [did, leaving, fetchCommunityDetails]);
+
+  // Share community handler: copy a join link to the clipboard. The URL is the
+  // current community page with ?action=join so that:
+  //   - Logged-out recipients see the join CTA, log in, and are redirected
+  //     back to this page (via the pendingRedirect flow) where ?action=join
+  //     auto-fires.
+  //   - Logged-in non-members hit auto-join immediately.
+  //   - Existing members just land on the community page.
+  const handleShare = useCallback(async () => {
+    if (!did) return;
+    setShareError('');
+    const url = `${window.location.origin}/communities/${encodeURIComponent(did)}?action=join`;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for non-secure contexts / older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!ok) throw new Error('Copy command failed');
+      }
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      setShareError('Could not copy link. Long-press or right-click to copy manually.');
+    }
+  }, [did]);
 
   // Debounce member search
   useEffect(() => {
@@ -534,6 +610,19 @@ export function CommunityPage() {
                 <Heading size={{ base: 'lg', md: 'xl' }} fontFamily="heading">
                   {community.displayName}
                 </Heading>
+                <Flex gap={2} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
+                  <Button
+                    onClick={handleShare}
+                    size="sm"
+                    variant="outline"
+                    colorPalette="accent"
+                  >
+                    {shareCopied ? '✓ Link copied' : '🔗 Share'}
+                  </Button>
+                </Flex>
+                {shareError && (
+                  <Text color="fg.error" fontSize="xs">{shareError}</Text>
+                )}
                 <HStack gap={2}>
                   <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
                     {memberCount} {memberCount === 1 ? 'member' : 'members'}
@@ -556,6 +645,33 @@ export function CommunityPage() {
                   <Text color="fg.default" fontSize={{ base: 'sm', md: 'md' }}>
                     {community.description}
                   </Text>
+                )}
+                {community.links && community.links.length > 0 && (
+                  <Flex gap={2} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
+                    {community.links.map((link) => (
+                      <Box
+                        key={`${link.name}-${link.url}`}
+                        as="a"
+                        // @ts-expect-error Chakra polymorphic anchor props
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        fontSize="xs"
+                        fontWeight="medium"
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                        borderWidth="1px"
+                        borderColor="accent.default"
+                        color="accent.default"
+                        textDecoration="none"
+                        _hover={{ bg: 'accent.subtle' }}
+                        transition="background-color 0.15s ease"
+                      >
+                        {link.name}
+                      </Box>
+                    ))}
+                  </Flex>
                 )}
               </VStack>
             </Flex>
@@ -784,6 +900,48 @@ export function CommunityPage() {
                         >
                           ⚙ Settings
                         </Button>
+                        <Button
+                          onClick={handleShare}
+                          size="sm"
+                          variant="outline"
+                          colorPalette="accent"
+                        >
+                          {shareCopied ? '✓ Link copied' : '🔗 Share'}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setLeaveError('');
+                            setShowLeaveConfirm(true);
+                          }}
+                          size="sm"
+                          variant="outline"
+                          colorPalette="red"
+                        >
+                          Leave
+                        </Button>
+                      </Flex>
+                    )}
+                    {!isAdmin && (
+                      <Flex gap={2} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
+                        <Button
+                          onClick={handleShare}
+                          size="sm"
+                          variant="outline"
+                          colorPalette="accent"
+                        >
+                          {shareCopied ? '✓ Link copied' : '🔗 Share'}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setLeaveError('');
+                            setShowLeaveConfirm(true);
+                          }}
+                          size="sm"
+                          variant="outline"
+                          colorPalette="red"
+                        >
+                          Leave Community
+                        </Button>
                       </Flex>
                     )}
                   </Flex>
@@ -829,9 +987,40 @@ export function CommunityPage() {
                     </Text>
                   )}
 
+                  {community.links && community.links.length > 0 && (
+                    <Flex gap={2} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
+                      {community.links.map((link) => (
+                        <Box
+                          key={`${link.name}-${link.url}`}
+                          as="a"
+                          // @ts-expect-error Chakra polymorphic anchor props
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          fontSize="xs"
+                          fontWeight="medium"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          borderWidth="1px"
+                          borderColor="accent.default"
+                          color="accent.default"
+                          textDecoration="none"
+                          _hover={{ bg: 'accent.subtle' }}
+                          transition="background-color 0.15s ease"
+                        >
+                          {link.name}
+                        </Box>
+                      ))}
+                    </Flex>
+                  )}
+
                   <Text color="fg.subtle" fontSize="xs" fontFamily="mono">
                     {community.did}
                   </Text>
+                  {shareError && (
+                    <Text color="fg.error" fontSize="xs">{shareError}</Text>
+                  )}
                 </>
               )}
             </VStack>
@@ -840,6 +1029,61 @@ export function CommunityPage() {
           {error && (
             <Box bg="red.50" borderRadius="md" p={4}>
               <Text color="fg.error">{error}</Text>
+            </Box>
+          )}
+
+          {/* Leave community confirmation */}
+          {showLeaveConfirm && (
+            <Box
+              bg="red.50"
+              borderRadius="xl"
+              p={6}
+              shadow="sm"
+              borderWidth="1px"
+              borderColor="red.200"
+            >
+              <VStack gap={3} align="stretch">
+                <Heading size="sm" color="red.700">
+                  Leave {community.displayName}?
+                </Heading>
+                <Text color="red.700" fontSize="sm">
+                  You will lose access to member-only content for this community.
+                  You can rejoin later if the community is open or admin-approved.
+                  {isAdmin && (
+                    <>
+                      {' '}You are an admin — leaving will remove your admin
+                      privileges. If you are the only admin, you must promote
+                      another member first.
+                    </>
+                  )}
+                </Text>
+                {leaveError && (
+                  <Text color="red.700" fontSize="sm" fontWeight="medium">
+                    {leaveError}
+                  </Text>
+                )}
+                <HStack gap={2}>
+                  <Button
+                    colorPalette="red"
+                    size="sm"
+                    onClick={handleLeaveCommunity}
+                    loading={leaving}
+                  >
+                    Yes, leave community
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setShowLeaveConfirm(false);
+                      setLeaveError('');
+                    }}
+                    disabled={leaving}
+                  >
+                    Cancel
+                  </Button>
+                </HStack>
+              </VStack>
             </Box>
           )}
 

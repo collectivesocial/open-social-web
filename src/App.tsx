@@ -208,6 +208,48 @@ function HomePage() {
   return (
     <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <VStack gap={8} align="stretch">
+          {/* My Communities */}
+          <Box>
+            <Flex 
+              direction={{ base: 'column', md: 'row' }} 
+              justify="space-between" 
+              align={{ base: 'stretch', md: 'center' }}
+              gap={{ base: 4, md: 0 }}
+              mb={4}
+            >
+              <Box>
+                <Heading size={{ base: 'lg', md: 'xl' }} mb={1}>My Communities</Heading>
+                <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
+                  Communities you've joined on OpenSocial
+                </Text>
+              </Box>
+              <CreateCommunityModal onSuccess={fetchMemberships} />
+            </Flex>
+
+          {membershipsLoading ? (
+            <Grid templateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(280px, 1fr))' }} gap={4}>
+              <CommunityCardSkeleton />
+              <CommunityCardSkeleton />
+              <CommunityCardSkeleton />
+            </Grid>
+          ) : memberships.length === 0 ? (
+            <EmptyState
+              title="No communities yet"
+              description="You haven't joined any communities yet. Join a community to get started and connect with others who share your interests."
+            />
+          ) : (
+            <Grid templateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(280px, 1fr))' }} gap={4}>
+              {memberships.map((membership) => (
+                <CommunityCard 
+                  key={membership.uri} 
+                  membership={membership}
+                  onDelete={fetchMemberships}
+                />
+              ))}
+            </Grid>
+          )}
+          </Box>
+
           {/* Search Communities */}
           <Box>
             <Heading size={{ base: 'lg', md: 'xl' }} mb={2}>
@@ -291,48 +333,6 @@ function HomePage() {
                 ))}
               </VStack>
             )}
-          </Box>
-
-          {/* My Communities */}
-          <Box>
-            <Flex 
-              direction={{ base: 'column', md: 'row' }} 
-              justify="space-between" 
-              align={{ base: 'stretch', md: 'center' }}
-              gap={{ base: 4, md: 0 }}
-              mb={4}
-            >
-              <Box>
-                <Heading size={{ base: 'lg', md: 'xl' }} mb={1}>My Communities</Heading>
-                <Text color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
-                  Communities you've joined on OpenSocial
-                </Text>
-              </Box>
-              <CreateCommunityModal onSuccess={fetchMemberships} />
-            </Flex>
-
-          {membershipsLoading ? (
-            <Grid templateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(280px, 1fr))' }} gap={4}>
-              <CommunityCardSkeleton />
-              <CommunityCardSkeleton />
-              <CommunityCardSkeleton />
-            </Grid>
-          ) : memberships.length === 0 ? (
-            <EmptyState
-              title="No communities yet"
-              description="You haven't joined any communities yet. Join a community to get started and connect with others who share your interests."
-            />
-          ) : (
-            <Grid templateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(280px, 1fr))' }} gap={4}>
-              {memberships.map((membership) => (
-                <CommunityCard 
-                  key={membership.uri} 
-                  membership={membership}
-                  onDelete={fetchMemberships}
-                />
-              ))}
-            </Grid>
-          )}
           </Box>
         </VStack>
       </Container>

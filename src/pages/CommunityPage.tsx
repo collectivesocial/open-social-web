@@ -185,6 +185,8 @@ export function CommunityPage() {
       if (response.ok) {
         if (data.status === 'already_member') {
           setJoinStatus('already_member');
+          await fetchCommunityDetails();
+          await fetchMembers();
           if (returnTo) {
             setTimeout(() => {
               window.location.href = returnTo;
@@ -213,9 +215,9 @@ export function CommunityPage() {
     }
   }, [did, joining, returnTo, fetchCommunityDetails, fetchMembers]);
 
-  // Auto-join when ?action=join and user is authenticated and not already a member
+  // Auto-join when ?action=join and user is authenticated and not already a member or pending
   useEffect(() => {
-    if (action === 'join' && details && details.isAuthenticated && !details.isMember && !joining && !joinStatus) {
+    if (action === 'join' && details && details.isAuthenticated && !details.isMember && details.membershipStatus !== 'pending' && !joining && !joinStatus) {
       handleJoinCommunity();
     }
   }, [action, details, joining, joinStatus, handleJoinCommunity]);
@@ -576,9 +578,11 @@ export function CommunityPage() {
   const { community, memberCount, isAdmin, userRole } = details;
   const isMember = details.isMember;
   const isAuthenticated = details.isAuthenticated;
+  const membershipStatus = details.membershipStatus;
+  const isPendingMember = isAuthenticated && !isMember && (membershipStatus === 'pending' || joinStatus === 'pending');
 
   // Non-authenticated or non-member view: show community info with join option
-  if (!isAuthenticated || !isMember) {
+  if (!isAuthenticated || (!isMember && !isPendingMember)) {
     return (
       <Box minH="100vh" bg="bg.page">
         {community.banner && (
@@ -714,9 +718,9 @@ export function CommunityPage() {
                   {!returnTo && (
                     <Button
                       colorPalette="accent"
-                      onClick={() => {
-                        // Reload page to show full member view
-                        window.location.reload();
+                      onClick={async () => {
+                        await fetchCommunityDetails();
+                        await fetchMembers();
                       }}
                     >
                       View Community
@@ -784,6 +788,24 @@ export function CommunityPage() {
 
       <Container maxW="container.content" py={{ base: 4, md: 8 }} px={{ base: 4, md: 6 }}>
         <VStack gap={6} align="stretch">
+          {/* Pending membership notice */}
+          {isPendingMember && (
+            <Box
+              bg="orange.50"
+              borderWidth="1px"
+              borderColor="orange.200"
+              borderRadius="lg"
+              p={4}
+              textAlign="center"
+            >
+              <Text fontWeight="semibold" color="orange.700">
+                ⏳ Your membership is pending admin approval
+              </Text>
+              <Text fontSize="sm" color="orange.600" mt={1}>
+                You will have full access once an admin approves your request.
+              </Text>
+            </Box>
+          )}
           {/* Header Section */}
           <Flex
             direction={{ base: 'column', md: 'row' }}

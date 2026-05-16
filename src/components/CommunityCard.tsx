@@ -202,7 +202,11 @@ export function CommunityCard({ membership, onDelete }: CommunityCardProps) {
           )}
 
           <Text fontSize="xs" color="fg.subtle">
-            Joined {new Date(membership.joinedAt).toLocaleDateString()}
+            {status === 'pending'
+              ? 'Membership pending approval'
+              : membership.joinedAt
+                ? `Joined ${new Date(membership.joinedAt).toLocaleDateString()}`
+                : 'Member'}
           </Text>
         </Box>
       </Flex>

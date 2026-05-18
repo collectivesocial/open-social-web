@@ -36,6 +36,7 @@ export interface CommunityDetails {
   isAuthenticated: boolean;
   userRole?: string;
   credentialError?: boolean;
+  membershipStatus?: 'active' | 'pending' | null;
 }
 
 export interface Membership {

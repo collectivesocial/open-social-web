@@ -12,6 +12,7 @@ import {
   RadioGroupRoot,
   RadioGroupItem,
   RadioGroupItemControl,
+  RadioGroupItemHiddenInput,
   RadioGroupItemText,
 } from './ui/radio-group';
 import {
@@ -274,6 +275,7 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                 <RadioGroupRoot
                   value={authMethod}
                   onValueChange={(e) => {
+                    if (!e.value) return;
                     setAuthMethod(e.value as AuthMethod);
                     setCimdUrlError('');
                   }}
@@ -285,7 +287,8 @@ export function RegisterAppModal({ onSuccess }: RegisterAppModalProps) {
                       ['http_signature', 'HTTP Signature (CIMD)'],
                       ['both', 'Both'],
                     ] as const).map(([value, label]) => (
-                      <RadioGroupItem key={value} value={value}>
+                      <RadioGroupItem key={value} value={value} cursor="pointer">
+                        <RadioGroupItemHiddenInput />
                         <RadioGroupItemControl />
                         <RadioGroupItemText fontSize="sm">{label}</RadioGroupItemText>
                       </RadioGroupItem>

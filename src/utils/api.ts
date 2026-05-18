@@ -37,8 +37,11 @@ async function request<T = any>(
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    const message = data.details
-      ? `${data.error}: ${data.details}`
+    const extra = data.detail ?? data.details;
+    const extraText =
+      extra && typeof extra === 'object' ? JSON.stringify(extra) : extra;
+    const message = extraText
+      ? `${data.error}: ${extraText}`
       : data.error || `Request failed (${res.status})`;
     throw new Error(message);
   }

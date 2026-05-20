@@ -31,7 +31,7 @@ interface MembersResponse {
 export function CommunityPage() {
   const { did } = useParams<{ did: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [details, setDetails] = useState<CommunityDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -719,6 +719,9 @@ export function CommunityPage() {
                     <Button
                       colorPalette="accent"
                       onClick={async () => {
+                        setJoinStatus(null);
+                        searchParams.delete('action');
+                        setSearchParams(searchParams, { replace: true });
                         await fetchCommunityDetails();
                         await fetchMembers();
                       }}

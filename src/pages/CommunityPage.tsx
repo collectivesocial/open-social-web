@@ -1640,7 +1640,11 @@ export function CommunityPage() {
                 }
                 return null;
               }
-              // Documents: use author handle as domain (standard.site pattern)
+              // Documents: prefer the URL resolved server-side from the
+              // document's site.standard.publication.
+              if (record.url) return record.url;
+              // Fallback: assume the author handle is the publication domain
+              // (only correct for publications hosted at the author's handle).
               if (record.path && record.authorHandle) {
                 return `https://${record.authorHandle}${record.path}`;
               }
@@ -1729,6 +1733,9 @@ export function CommunityPage() {
           {(() => {
             const documents = sharedContent.filter((r) => r.type !== 'event');
             const contentUrl = (record: SharedContent) => {
+              // Prefer the URL resolved server-side from the document's
+              // site.standard.publication; fall back to the author handle.
+              if (record.url) return record.url;
               if (record.path && record.authorHandle) {
                 return `https://${record.authorHandle}${record.path}`;
               }

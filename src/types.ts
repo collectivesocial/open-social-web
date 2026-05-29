@@ -149,6 +149,13 @@ export interface SharedContent {
   authorHandle?: string;
   eventUrl?: string;
   /**
+   * Canonical web URL resolved server-side from the document's
+   * `site.standard.publication` (e.g. a Leaflet publication URL). Preferred
+   * over building a URL from the author handle, which is wrong for
+   * publications hosted on their own domain.
+   */
+  url?: string;
+  /**
    * True when this entry was synthesized from a native
    * `community.lexicon.calendar.event` record in the community's PDS rather
    * than from a `community.opensocial.sharedContent` wrapper record. Native

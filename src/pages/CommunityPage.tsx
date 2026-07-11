@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { csrfHeaders } from '../utils/csrf';
 import { api, API_BASE } from '../utils/api';
 import { sanitizeRedirectUrl } from '../utils/redirect';
+import { communityShareUrl } from '../utils/share';
 import {
   Box,
   Container,
@@ -255,17 +256,14 @@ export function CommunityPage() {
     }
   }, [did, leaving, fetchCommunityDetails]);
 
-  // Share community handler: copy a join link to the clipboard. The URL is the
-  // current community page with ?action=join so that:
-  //   - Logged-out recipients see the join CTA, log in, and are redirected
-  //     back to this page (via the pendingRedirect flow) where ?action=join
-  //     auto-fires.
-  //   - Logged-in non-members hit auto-join immediately.
-  //   - Existing members just land on the community page.
+  // Share community handler: copy the API share link to the clipboard. The
+  // share endpoint serves OG meta tags (dynamic preview card) to link-preview
+  // crawlers, then redirects humans to this community page with ?action=join
+  // so the existing join CTA / auto-join flow still fires.
   const handleShare = useCallback(async () => {
     if (!did) return;
     setShareError('');
-    const url = `${window.location.origin}/communities/${encodeURIComponent(did)}?action=join`;
+    const url = communityShareUrl(did);
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
